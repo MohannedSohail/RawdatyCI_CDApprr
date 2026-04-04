@@ -20,6 +20,7 @@ import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Preview
 fun AdminAddUserScreen(
     name: String,
     email: String,

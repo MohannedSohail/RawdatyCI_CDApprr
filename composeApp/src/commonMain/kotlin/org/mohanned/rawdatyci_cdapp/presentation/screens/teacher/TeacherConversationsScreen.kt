@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.mohanned.rawdatyci_cdapp.domain.model.Conversation
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
@@ -202,5 +203,58 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun TeacherConversationsPreview() {
+    RawdatyTheme {
+        val dummyConversations = listOf(
+            Conversation(
+                id = 1,
+                participantId = 101,
+                participantName = "محمد العلي",
+                participantAvatar = null,
+                childName = "أحمد العلي",
+                lastMessage = "مرحباً أ. سارة، كيف حال أحمد اليوم؟",
+                lastMessageAt = "09:00 ص",
+                unreadCount = 2,
+                isOnline = true
+            ),
+            Conversation(
+                id = 2,
+                participantId = 102,
+                participantName = "سارة العلي",
+                participantAvatar = null,
+                childName = "ليان العلي",
+                lastMessage = "شكراً جزيلاً على مجهوداتكم.",
+                lastMessageAt = "أمس",
+                unreadCount = 0,
+                isOnline = false
+            ),
+            Conversation(
+                id = 3,
+                participantId = 103,
+                participantName = "خالد فهد",
+                participantAvatar = null,
+                childName = "فهد خالد",
+                lastMessage = "هل يوجد واجب منزلي اليوم؟",
+                lastMessageAt = "السبت",
+                unreadCount = 0,
+                isOnline = true
+            )
+        )
+        TeacherConversationsScreen(
+            conversations = dummyConversations,
+            query = "",
+            isLoading = false,
+            isLoadingMore = false,
+            canLoadMore = false,
+            onSearch = {},
+            onLoadMore = {},
+            onConversationClick = {},
+            onBack = {}
+        )
     }
 }

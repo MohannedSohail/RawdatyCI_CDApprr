@@ -15,15 +15,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import kotlinx.coroutines.delay
-import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyLogo
+import org.jetbrains.compose.resources.painterResource
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import rawdatyci_cdapp.composeapp.generated.resources.Res
+import rawdatyci_cdapp.composeapp.generated.resources.rawdatylogo
 
 @Composable
 fun SplashScreen(
-    onFinished: () -> Unit
+    onFinished: () -> Unit = {}
 ) {
     var startAnim by remember { mutableStateOf(false) }
-    
+
     // Smooth entry animations
     val scaleAnim by animateFloatAsState(
         targetValue = if (startAnim) 1f else 0.6f,
@@ -33,7 +35,7 @@ fun SplashScreen(
         targetValue = if (startAnim) 1f else 0f,
         animationSpec = tween(1500, easing = EaseOutQuart)
     )
-    
+
     // Continuous premium pulse
     val infiniteTransition = rememberInfiniteTransition()
     val pulseScale by infiniteTransition.animateFloat(
@@ -67,9 +69,9 @@ fun SplashScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF0F2A3E), // Deep Blue start
-                        Color(0xFF1E4C6F), // Blue-600 middle
-                        Color(0xFF256640)  // Dark Green end
+                        BluePrimary, // Deep Blue start
+                        BlueDark, // Blue-600 middle
+                        Gray900  // Dark Green end
                     )
                 )
             ),
@@ -81,7 +83,7 @@ fun SplashScreen(
                 val progress = (particleAnim + p.startTime) % 1f
                 val y = size.height * p.yStart - (size.height * 0.15f * progress)
                 val alpha = (1f - progress) * 0.25f
-                
+
                 drawCircle(
                     color = White.copy(alpha = alpha),
                     radius = p.size.dp.toPx(),
@@ -96,31 +98,27 @@ fun SplashScreen(
                 .alpha(alphaAnim)
                 .scale(scaleAnim * pulseScale)
         ) {
-            // High-fidelity Logo with White tint for contrast
-            Box(
+            // High-fidelity Logo using rawdatylogo.png
+            Image(
+                painter = painterResource(Res.drawable.rawdatylogo),
+                contentDescription = null,
                 modifier = Modifier
-                    .size(170.dp)
+                    .size(200.dp)
                     .clip(CircleShape)
-                    .background(White.copy(0.12f))
-                    .border(2.dp, White.copy(0.15f), CircleShape)
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                RawdatyLogo(modifier = Modifier.fillMaxSize(), isWhite = true)
-            }
-            
+            )
+
             Spacer(Modifier.height(48.dp))
-            
+
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "رَوْضَتِي", // Added Tashkeel for core branding as requested
+                    "رَوْضَتِي",
                     style = MaterialTheme.typography.displayMedium,
-                    color = MintPrimary, // Mint Green primary accent
+                    color = MintPrimary,
                     fontWeight = FontWeight.Black,
                     fontFamily = CairoFontFamily,
                     letterSpacing = 1.sp
                 )
-                
+
                 Text(
                     "التعليم بذكاء.. والتربية بحب",
                     style = MaterialTheme.typography.titleMedium,
@@ -130,7 +128,7 @@ fun SplashScreen(
                 )
             }
         }
-        
+
         // Polished Loading Indicator at bottom
         Column(
             modifier = Modifier
@@ -144,7 +142,7 @@ fun SplashScreen(
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(24.dp)
             )
-            
+
             Text(
                 "جاري تهيئة النظام...",
                 style = MaterialTheme.typography.labelSmall,
@@ -167,6 +165,6 @@ private data class ParticleData(
 @Composable
 fun SplashPreview() {
     RawdatyTheme {
-        SplashScreen({})
+        SplashScreen()
     }
 }

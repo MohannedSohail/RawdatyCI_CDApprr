@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import org.mohanned.rawdatyci_cdapp.domain.model.Message
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
@@ -56,7 +57,11 @@ fun ChatRoomScreen(
                     }
                     Spacer(Modifier.width(8.dp))
                     Box {
-                        RawdatyAvatar(name = recipientName, size = 44.dp, gradient = RawdatyGradients.AvatarBlue)
+                        RawdatyAvatar(
+                            name = recipientName,
+                            size = 44.dp,
+                            gradient = RawdatyGradients.AvatarBlue
+                        )
                         if (isOnline) {
                             Box(
                                 modifier = Modifier
@@ -73,23 +78,23 @@ fun ChatRoomScreen(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            recipientName, 
-                            style = MaterialTheme.typography.titleMedium, 
-                            color = BlueDark, 
+                            recipientName,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = BlueDark,
                             fontWeight = FontWeight.Bold,
                             fontFamily = CairoFontFamily
                         )
                         if (childName != null) {
                             Text(
-                                "ولي أمر: $childName", 
-                                style = MaterialTheme.typography.labelSmall, 
+                                "ولي أمر: $childName",
+                                style = MaterialTheme.typography.labelSmall,
                                 color = Gray500,
                                 fontFamily = CairoFontFamily
                             )
                         } else {
                             Text(
-                                if (isOnline) "متصل الآن" else "غير متصل", 
-                                style = MaterialTheme.typography.labelSmall, 
+                                if (isOnline) "متصل الآن" else "غير متصل",
+                                style = MaterialTheme.typography.labelSmall,
                                 color = if (isOnline) ColorSuccess else Gray400,
                                 fontFamily = CairoFontFamily
                             )
@@ -113,15 +118,24 @@ fun ChatRoomScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    IconButton(onClick = { /* Attachment */ }, modifier = Modifier.size(40.dp).background(Gray50, CircleShape)) {
+                    IconButton(
+                        onClick = { /* Attachment */ },
+                        modifier = Modifier.size(40.dp).background(Gray50, CircleShape)
+                    ) {
                         Icon(Icons.Default.Add, null, tint = BluePrimary)
                     }
-                    
+
                     OutlinedTextField(
                         value = messageText,
                         onValueChange = onTextChange,
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("اكتب رسالتك هنا...", fontFamily = CairoFontFamily, color = Gray400) },
+                        placeholder = {
+                            Text(
+                                "اكتب رسالتك هنا...",
+                                fontFamily = CairoFontFamily,
+                                color = Gray400
+                            )
+                        },
                         shape = RoundedCornerShape(24.dp),
                         textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -132,19 +146,35 @@ fun ChatRoomScreen(
                         ),
                         maxLines = 4
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(if (messageText.isBlank() && !isSending) BluePrimary.copy(0.4f) else BluePrimary)
-                            .clickable(enabled = messageText.isNotBlank() && !isSending, onClick = onSend),
+                            .background(
+                                if (messageText.isBlank() && !isSending) BluePrimary.copy(
+                                    0.4f
+                                ) else BluePrimary
+                            )
+                            .clickable(
+                                enabled = messageText.isNotBlank() && !isSending,
+                                onClick = onSend
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         if (isSending) {
-                            CircularProgressIndicator(color = White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(
+                                color = White,
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
                         } else {
-                            Icon(Icons.AutoMirrored.Filled.Send, null, tint = White, modifier = Modifier.size(22.dp))
+                            Icon(
+                                Icons.AutoMirrored.Filled.Send,
+                                null,
+                                tint = White,
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
                     }
                 }
@@ -208,14 +238,59 @@ fun ChatBubble(message: Message, isMe: Boolean) {
                     )
                     if (isMe) {
                         Icon(
-                            Icons.Default.DoneAll, 
-                            null, 
-                            tint = White.copy(0.7f), 
+                            Icons.Default.DoneAll,
+                            null,
+                            tint = White.copy(0.7f),
                             modifier = Modifier.size(12.dp)
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun ChatRoomPreview() {
+    RawdatyTheme {
+        val dummyMessages = listOf(
+            Message(
+                1, 1, 2, "مرحباً أ. سارة، كيف حال أحمد اليوم؟", "09:00 ص", "",
+                isRead = false,
+                sentAt = "Mohanned"
+            ),
+            Message(
+                2, 2, 1, "أهلاً بك، أحمد ممتاز اليوم وقد شارك بفعالية في حصة الرسم.", "09:05 ص", "",
+                isRead = true,
+                sentAt = "Mohanned"
+            ),
+            Message(
+                3, 1, 2, "شكراً جزيلاً لكِ على اهتمامك.", "09:10 ص", "",
+                isRead = false,
+                sentAt = "Mohanned"
+            ),
+            Message(
+                4, 2, 1, "لا شكر على واجب، نحن هنا من أجلهم.", "09:12 ص", "",
+                isRead = true,
+                sentAt = "Mohanned"
+            )
+        )
+        ChatRoomScreen(
+            recipientName = "محمد العلي",
+            childName = "أحمد العلي",
+            messages = dummyMessages,
+            currentUserId = 2,
+            messageText = "",
+            isSending = false,
+            isOnline = true,
+            isLoading = false,
+            isLoadingMore = false,
+            canLoadMore = false,
+            onTextChange = {},
+            onSend = {},
+            onLoadMore = {},
+            onBack = {}
+        )
     }
 }

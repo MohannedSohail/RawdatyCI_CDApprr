@@ -39,7 +39,6 @@ fun NotificationsScreen(
     val tabs = listOf("الكل", "غير مقروء")
     val listState = rememberLazyListState()
 
-    // Infinite Scrolling
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleIndex ->
@@ -89,7 +88,6 @@ fun NotificationsScreen(
                         }
                     }
                     
-                    // Tabs Section
                     Row(
                         modifier = Modifier
                             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -144,7 +142,7 @@ fun NotificationsScreen(
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (isLoading) {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(8) { NotificationItemShimmer() }
+                    items(8) { ShimmerBox(Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(16.dp))) }
                 }
             } else if (notifications.isEmpty()) {
                 Column(
@@ -208,5 +206,51 @@ fun NotificationsScreen(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun NotificationsPreview() {
+    RawdatyTheme {
+        val dummyNotifs = listOf(
+            AppNotification(
+                id = 1,
+                title = "تم رصد حضور أحمد اليوم",
+                body = "لقد تم تسجيل حضور طفلك في تمام الساعة 08:15 ص.",
+                type = "attendance",
+                isRead = false,
+                createdAt = "منذ ساعة"
+            ),
+            AppNotification(
+                id = 2,
+                title = "رسالة جديدة من المعلمة",
+                body = "مرحباً، أود إبلاغكم بأن أحمد شارك اليوم بفعالية في حصة الرسم.",
+                type = "message",
+                isRead = false,
+                createdAt = "منذ ساعتين"
+            ),
+            AppNotification(
+                id = 3,
+                title = "فتح باب التسجيل للرحلة",
+                body = "يسرنا إبلاغكم بفتح باب التسجيل لرحلة حديقة الحيوان القادمة.",
+                type = "news",
+                isRead = true,
+                createdAt = "منذ ٥ ساعات"
+            )
+        )
+        NotificationsScreen(
+            notifications = dummyNotifs,
+            unreadCount = 2,
+            isLoading = false,
+            isLoadingMore = false,
+            canLoadMore = true,
+            selectedTab = 0,
+            onTabChange = {},
+            onLoadMore = {},
+            onMarkRead = {},
+            onMarkAllRead = {},
+            onBack = {}
+        )
     }
 }

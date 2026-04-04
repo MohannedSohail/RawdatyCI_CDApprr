@@ -21,7 +21,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
+import org.jetbrains.compose.resources.painterResource
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import rawdatyci_cdapp.composeapp.generated.resources.Res
+import rawdatyci_cdapp.composeapp.generated.resources.rawdatylogo
 
 // ══════════════════════════════════════════════════════════════════════
 //  MODELS
@@ -414,22 +417,11 @@ fun RawdatyLogo(
     color: Color = BluePrimary,
     isWhite: Boolean = false
 ) {
-    val tintColor = if (isWhite) White else color
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(72.dp).offset(y = (-10).dp), tint = AmberPrimary)
-            Icon(Icons.Default.ChildCare, null, modifier = Modifier.size(64.dp), tint = tintColor)
-            Icon(Icons.Default.MenuBook, null, modifier = Modifier.size(32.dp).offset(y = 28.dp), tint = MintPrimary)
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "روضتي", 
-            style = MaterialTheme.typography.headlineMedium, 
-            fontWeight = FontWeight.Black, 
-            color = tintColor,
-            fontFamily = CairoFontFamily
-        )
-    }
+    Image(
+        painter = painterResource(Res.drawable.rawdatylogo),
+        contentDescription = "رَوْضَتِي",
+        modifier = modifier
+    )
 }
 
 @Composable

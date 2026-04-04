@@ -21,6 +21,7 @@ import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Preview
 fun AdminAddClassroomScreen(
     name: String,
     teacherName: String,

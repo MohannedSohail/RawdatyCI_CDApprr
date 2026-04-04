@@ -16,8 +16,10 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
@@ -54,13 +56,15 @@ fun UserTypeSelectScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp)) {
                     Box(
                         modifier = Modifier
-                            .size(110.dp)
+                            .size(120.dp)
                             .clip(RoundedCornerShape(32.dp))
                             .background(Gray50)
                             .border(1.dp, Gray200, RoundedCornerShape(32.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        RawdatyLogo(modifier = Modifier.fillMaxSize(0.65f))
+                        RawdatyLogo(
+                            modifier = Modifier.fillMaxSize().padding(8.dp)
+                        )
                     }
                     
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -186,5 +190,13 @@ private fun RoleCard(
                 modifier = Modifier.size(22.dp)
             )
         }
+    }
+}
+
+@Composable
+@Preview
+fun UserTypeSelectPreview() {
+    RawdatyTheme {
+        UserTypeSelectScreen()
     }
 }

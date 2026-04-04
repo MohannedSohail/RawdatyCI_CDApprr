@@ -45,7 +45,7 @@ fun AdminSendNotificationScreen(
             GlassHeader(
                 title = "إرسال تنبيه عاجل",
                 onBack = onBack,
-                backgroundColor = AmberPrimary
+                backgroundColor = BluePrimary
             )
         }
     ) { padding ->

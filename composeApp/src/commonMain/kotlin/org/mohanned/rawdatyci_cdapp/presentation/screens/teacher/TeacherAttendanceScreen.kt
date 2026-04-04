@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceStatus
 import org.mohanned.rawdatyci_cdapp.domain.model.Child
@@ -260,5 +261,30 @@ private fun AttendanceBottomSummary(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+@Composable
+@Preview
+fun TeacherAttendancePreview() {
+    RawdatyTheme {
+        val dummyChildren = listOf(
+            Child(1, "أحمد محمد العلي", "2019-05-10", "male", null, 1, "فصل النجوم", 1, "محمد العلي", "0501234567", "2024-09-01", 4, null),
+            Child(2, "ليان سارة العلي", "2019-08-15", "female", null, 1, "فصل النجوم", 1, "سارة العلي", "0501234567", "2024-09-01", 5, null),
+            Child(3, "فهد بن سلمان", "2019-01-20", "male", null, 1, "فصل النجوم", 2, "سلمان", "0501234568", "2024-09-01", 3, null),
+            Child(4, "نورة علي", "2019-03-12", "female", null, 1, "فصل النجوم", 3, "علي", "0501234569", "2024-09-01", 5, null)
+        )
+        TeacherAttendanceScreen(
+            children = dummyChildren,
+            attendance = mapOf(1 to AttendanceStatus.PRESENT, 2 to AttendanceStatus.PRESENT, 3 to AttendanceStatus.ABSENT),
+            classroomName = "فصل النجوم",
+            date = "الأحد، 24 مارس 2024",
+            isSaving = false,
+            isOffline = false,
+            onToggle = {},
+            onSelectAll = {},
+            onSave = {},
+            onBack = {}
+        )
     }
 }

@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -60,6 +61,7 @@ import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray200
 import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray400
 import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray500
 import org.mohanned.rawdatyci_cdapp.presentation.theme.MintPrimary
+import org.mohanned.rawdatyci_cdapp.presentation.theme.RawdatyTheme
 import org.mohanned.rawdatyci_cdapp.presentation.theme.White
 import rawdatyci_cdapp.composeapp.generated.resources.Res
 import rawdatyci_cdapp.composeapp.generated.resources.onboarding
@@ -69,7 +71,7 @@ import rawdatyci_cdapp.composeapp.generated.resources.onboarding2
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingScreen(
-    onFinished: () -> Unit
+    onFinished: () -> Unit = {}
 ) {
     val pages = listOf(
         OnboardingPage(
@@ -109,23 +111,22 @@ fun OnboardingScreen(
                     modifier = Modifier.fillMaxSize()
                 ) { index ->
                     Box(
-                        modifier = Modifier.fillMaxSize().padding(40.dp),
+                        modifier = Modifier.fillMaxSize().padding(start = 10.dp, end = 10.dp, bottom = 10.dp, top = 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(pages[index].image),
                             contentDescription = null,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(32.dp)),
-                            contentScale = ContentScale.Inside
+                                .fillMaxSize()
+                                .aspectRatio(0.85f)
+                                .clip(RoundedCornerShape(24.dp)),
+                            contentScale = ContentScale.FillBounds
                         )
                     }
                 }
             }
 
-            // ── Modern Content Area (40%) ────────
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,3 +242,11 @@ private data class OnboardingPage(
     val image: DrawableResource,
     val color: Color
 )
+
+@Preview
+@Composable
+fun OnboardingPreview() {
+    RawdatyTheme {
+        OnboardingScreen()
+    }
+}

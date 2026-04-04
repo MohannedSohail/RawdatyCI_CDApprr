@@ -52,15 +52,15 @@ fun AdminUsersScreen(
 
     Scaffold(
         containerColor = AppBg,
-        topBar = { 
+        topBar = {
             GlassHeader(
-                title = "إدارة المستخدمين", 
-                onBack = onBack, 
+                title = "إدارة المستخدمين",
+                onBack = onBack,
                 gradient = RawdatyGradients.AdminHeader,
                 headerHeight = 140.dp
-            ) 
+            )
         },
-        floatingActionButton = { 
+        floatingActionButton = {
             RawdatyFAB(onClick = onAdd, icon = Icons.Default.PersonAdd)
         },
     ) { padding ->
@@ -97,7 +97,10 @@ fun AdminUsersScreen(
                                 enter = fadeIn() + expandVertically(),
                                 exit = fadeOut() + shrinkVertically()
                             ) {
-                                Box(Modifier.size(32.dp, 3.dp).clip(CircleShape).background(BluePrimary))
+                                Box(
+                                    Modifier.size(32.dp, 3.dp).clip(CircleShape)
+                                        .background(BluePrimary)
+                                )
                             }
                         }
                     }
@@ -109,7 +112,13 @@ fun AdminUsersScreen(
                 OutlinedTextField(
                     value = query,
                     onValueChange = onSearch,
-                    placeholder = { Text("ابحث بالاسم أو البريد...", fontFamily = CairoFontFamily, color = Gray400) },
+                    placeholder = {
+                        Text(
+                            "ابحث بالاسم أو البريد...",
+                            fontFamily = CairoFontFamily,
+                            color = Gray400
+                        )
+                    },
                     leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -125,8 +134,15 @@ fun AdminUsersScreen(
             }
 
             if (isLoading) {
-                LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(6) { NotificationItemShimmer() } // Using existing shimmer for consistency
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(6) {
+                        ShimmerBox(
+                            Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(16.dp))
+                        )
+                    }
                 }
             } else if (users.isEmpty()) {
                 EmptyState(
@@ -149,12 +165,19 @@ fun AdminUsersScreen(
 
                     if (isLoadingMore) {
                         item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = BluePrimary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = BluePrimary,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                         }
                     }
-                    
+
                     item { Spacer(Modifier.height(80.dp)) } // FAB spacing
                 }
             }
@@ -192,7 +215,10 @@ private fun UserRowItem(user: User, onClick: () -> Unit) {
             }
 
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         user.name,
                         style = MaterialTheme.typography.titleMedium,
@@ -204,7 +230,7 @@ private fun UserRowItem(user: User, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis
                     )
                     RoleTag(
-                        role = if(user.role == UserRole.TEACHER) "معلمة" else "ولي أمر",
+                        role = if (user.role == UserRole.TEACHER) "معلمة" else "ولي أمر",
                         useSmallText = true
                     )
                 }
@@ -220,10 +246,23 @@ private fun UserRowItem(user: User, onClick: () -> Unit) {
                         color = BlueLight.copy(0.4f),
                         shape = RoundedCornerShape(4.dp)
                     ) {
-                        Row(modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.School, null, tint = BluePrimary, modifier = Modifier.size(10.dp))
+                        Row(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.School,
+                                null,
+                                tint = BluePrimary,
+                                modifier = Modifier.size(10.dp)
+                            )
                             Spacer(Modifier.width(4.dp))
-                            Text(user.className, style = MaterialTheme.typography.labelSmall, color = BluePrimary, fontFamily = CairoFontFamily)
+                            Text(
+                                user.className,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = BluePrimary,
+                                fontFamily = CairoFontFamily
+                            )
                         }
                     }
                 }
@@ -243,8 +282,40 @@ private fun UserRowItem(user: User, onClick: () -> Unit) {
 @Composable
 fun AdminUsersPreview() {
     RawdatyTheme {
+        val dummyUsers = listOf(
+            User(
+                1,
+                "سارة أحمد",
+                "sara@rawdaty.com",
+                "058844225",
+                UserRole.TEACHER,
+                "",
+                true,
+                classId = 1,
+                className = "فصل النجوم",
+                createdAt = "20 ابريل"
+            ),
+            User(
+                2, "محمد العلي", "mohammed@mail.com", "05544223", UserRole.PARENT, "", true,
+                classId = 2,
+                className = "فصل الفيوم",
+                createdAt = "15 مايو"
+            ),
+            User(
+                3,
+                "نورة خالد",
+                "noura@rawdaty.com",
+                "0501112223",
+                UserRole.TEACHER,
+                "",
+                true,
+                classId = 2,
+                className = "فصل الأمل",
+                createdAt = "15 مايو"
+            )
+        )
         AdminUsersScreen(
-            users = emptyList(),
+            users = dummyUsers,
             query = "",
             selectedTab = 0,
             isLoading = false,

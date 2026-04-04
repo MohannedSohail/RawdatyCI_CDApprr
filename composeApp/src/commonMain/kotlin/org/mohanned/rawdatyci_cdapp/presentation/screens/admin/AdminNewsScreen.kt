@@ -73,7 +73,13 @@ fun AdminNewsScreen(
                     OutlinedTextField(
                         value = query,
                         onValueChange = onSearch,
-                        placeholder = { Text("بحث في الأخبار أو الإعلانات...", fontFamily = CairoFontFamily, color = Gray400) },
+                        placeholder = {
+                            Text(
+                                "بحث في الأخبار أو الإعلانات...",
+                                fontFamily = CairoFontFamily,
+                                color = Gray400
+                            )
+                        },
                         leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -90,7 +96,10 @@ fun AdminNewsScreen(
             }
 
             if (isLoading) {
-                LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                LazyColumn(
+                    contentPadding = PaddingValues(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     items(6) { NotificationItemShimmer() }
                 }
             } else if (news.isEmpty()) {
@@ -117,12 +126,19 @@ fun AdminNewsScreen(
 
                     if (isLoadingMore) {
                         item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = BluePrimary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = BluePrimary,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                         }
                     }
-                    
+
                     item { Spacer(Modifier.height(80.dp)) }
                 }
             }
@@ -162,7 +178,10 @@ private fun AdminNewsItem(
 
             // News Content
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         news.title,
                         style = MaterialTheme.typography.titleMedium,
@@ -186,14 +205,43 @@ private fun AdminNewsItem(
                     fontFamily = CairoFontFamily
                 )
                 Spacer(Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.AccessTime, null, tint = Gray400, modifier = Modifier.size(12.dp))
-                        Text(news.createdAt, style = MaterialTheme.typography.labelSmall, color = Gray400, fontFamily = CairoFontFamily)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.AccessTime,
+                            null,
+                            tint = Gray400,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            news.createdAt,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Gray400,
+                            fontFamily = CairoFontFamily
+                        )
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Person, null, tint = Gray400, modifier = Modifier.size(12.dp))
-                        Text(news.authorName, style = MaterialTheme.typography.labelSmall, color = Gray400, fontFamily = CairoFontFamily)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Person,
+                            null,
+                            tint = Gray400,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            news.authorName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Gray400,
+                            fontFamily = CairoFontFamily
+                        )
                     }
                 }
             }
@@ -201,18 +249,67 @@ private fun AdminNewsItem(
             // Small Actions in a vertical stack
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconButton(
-                    onClick = onEdit, 
+                    onClick = onEdit,
                     modifier = Modifier.size(36.dp).background(Gray50, CircleShape)
                 ) {
-                    Icon(Icons.Default.Edit, null, tint = BluePrimary, modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.Edit,
+                        null,
+                        tint = BluePrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
                 IconButton(
-                    onClick = onDelete, 
+                    onClick = onDelete,
                     modifier = Modifier.size(36.dp).background(Gray50, CircleShape)
                 ) {
-                    Icon(Icons.Default.DeleteOutline, null, tint = ColorError.copy(0.8f), modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.DeleteOutline,
+                        null,
+                        tint = ColorError.copy(0.8f),
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun AdminNewsPreview() {
+    RawdatyTheme {
+        AdminNewsScreen(
+            news = listOf(
+                News(
+                    1,
+                    "فتح باب التسجيل",
+                    "يسرنا إبلاغكم ببدء فترة التسجيل المبكر للفصل القادم.",
+                    "الإدارة",
+                    true,
+                    "Hossam",
+                    "24 مارس"
+                ),
+                News(
+                    2,
+                    "صيانة دورية",
+                    "سيتم إجراء صيانة دورية للمرافق غداً.",
+                    "الخدمات",
+                    true,
+                    "AlHossam",
+                    "30 مارس"
+                )
+            ),
+            query = "",
+            isLoading = false,
+            isLoadingMore = false,
+            canLoadMore = true,
+            onSearch = {},
+            onLoadMore = {},
+            onAdd = {},
+            onEdit = {},
+            onDelete = {},
+            onBack = {}
+        )
     }
 }

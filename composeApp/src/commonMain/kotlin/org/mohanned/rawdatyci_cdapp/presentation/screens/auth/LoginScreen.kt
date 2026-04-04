@@ -20,8 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import org.jetbrains.compose.resources.painterResource
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import rawdatyci_cdapp.composeapp.generated.resources.Res
+import rawdatyci_cdapp.composeapp.generated.resources.rawdatylogo
 
 @Composable
 fun LoginScreen(
@@ -67,16 +70,14 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Box(
+                    // Replaced RawdatyLogo with the new PNG logo
+                    Image(
+                        painter = painterResource(Res.drawable.rawdatylogo),
+                        contentDescription = null,
                         modifier = Modifier
-                            .size(100.dp)
+                            .size(120.dp)
                             .clip(CircleShape)
-                            .background(White.copy(0.1f))
-                            .border(1.dp, White.copy(0.2f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        RawdatyLogo(modifier = Modifier.size(60.dp), isWhite = true)
-                    }
+                    )
                     
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
@@ -205,10 +206,13 @@ fun LoginScreen(
     }
 }
 
-@Preview
 @Composable
+@Preview
 fun LoginPreview() {
     RawdatyTheme {
-        LoginScreen()
+        LoginScreen(
+            identifier = "1234567890",
+            password = "password123"
+        )
     }
 }

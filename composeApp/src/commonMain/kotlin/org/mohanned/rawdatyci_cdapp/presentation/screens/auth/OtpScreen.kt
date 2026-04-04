@@ -26,6 +26,7 @@ import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 
 @Composable
+@Preview
 fun OtpScreen(
     email: String,
     otp: String,

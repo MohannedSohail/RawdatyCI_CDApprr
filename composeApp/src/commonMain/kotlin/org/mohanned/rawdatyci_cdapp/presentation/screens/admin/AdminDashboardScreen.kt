@@ -12,9 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import org.mohanned.rawdatyci_cdapp.domain.model.News
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
@@ -33,9 +35,9 @@ fun AdminDashboardScreen(
 ) {
     val navItems = listOf(
         BottomNavItem("الرئيسية", Icons.Outlined.GridView, Icons.Filled.GridView),
-        BottomNavItem("الفصول",   Icons.Outlined.Groups, Icons.Filled.Groups),
-        BottomNavItem("المستخدمين",Icons.Outlined.PersonAdd, Icons.Filled.PersonAdd),
-        BottomNavItem("الإعدادات",Icons.Outlined.Settings, Icons.Filled.Settings),
+        BottomNavItem("الفصول", Icons.Outlined.Groups, Icons.Filled.Groups),
+        BottomNavItem("المستخدمين", Icons.Outlined.PersonAdd, Icons.Filled.PersonAdd),
+        BottomNavItem("الإعدادات", Icons.Outlined.Settings, Icons.Filled.Settings),
     )
 
     Scaffold(
@@ -62,7 +64,12 @@ fun AdminDashboardScreen(
                         .background(White.copy(0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.AdminPanelSettings, null, tint = White, modifier = Modifier.size(24.dp))
+                    Icon(
+                        Icons.Default.AdminPanelSettings,
+                        null,
+                        tint = White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
 
@@ -70,20 +77,53 @@ fun AdminDashboardScreen(
 
                 // ── KPI Summary Cards (Floating Effect) ────────────────────────
                 Column(modifier = Modifier.offset(y = (-40).dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatCard(label = "أولياء الأمور", value = totalParents.toString(), icon = Icons.Default.Groups, color = BluePrimary, modifier = Modifier.weight(1f)) { onQuickAction("المستخدمون") }
-                        StatCard(label = "المعلمات", value = totalTeachers.toString(), icon = Icons.Default.School, color = MintPrimary, modifier = Modifier.weight(1f)) { onQuickAction("المستخدمون") }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            label = "أولياء الأمور",
+                            value = totalParents.toString(),
+                            icon = Icons.Default.Groups,
+                            color = BluePrimary,
+                            modifier = Modifier.weight(1f)
+                        ) { onQuickAction("المستخدمون") }
+                        StatCard(
+                            label = "المعلمات",
+                            value = totalTeachers.toString(),
+                            icon = Icons.Default.School,
+                            color = MintPrimary,
+                            modifier = Modifier.weight(1f)
+                        ) { onQuickAction("المستخدمون") }
                     }
                     Spacer(Modifier.height(12.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatCard(label = "الفصول الدراسية", value = totalClasses.toString(), icon = Icons.Default.Class, color = AmberPrimary, modifier = Modifier.weight(1f)) { onQuickAction("الفصول") }
-                        StatCard(label = "حالة النظام", value = "١٠٠٪", icon = Icons.Default.VerifiedUser, color = BluePrimary, modifier = Modifier.weight(1f)) {}
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            label = "الفصول الدراسية",
+                            value = totalClasses.toString(),
+                            icon = Icons.Default.Class,
+                            color = AmberPrimary,
+                            modifier = Modifier.weight(1f)
+                        ) { onQuickAction("الفصول") }
+                        StatCard(
+                            label = "حالة النظام",
+                            value = "١٠٠٪",
+                            icon = Icons.Default.VerifiedUser,
+                            color = BluePrimary,
+                            modifier = Modifier.weight(1f)
+                        ) {}
                     }
                 }
 
                 // ── Recent News ─────────────────────────────
                 if (recentNews.isNotEmpty()) {
-                    SectionHeader("آخر الأخبار والتعميمات", actionText = "عرض الكل", onSeeAll = { onQuickAction("التعميمات") })
+                    SectionHeader(
+                        "آخر الأخبار والتعميمات",
+                        actionText = "عرض الكل",
+                        onSeeAll = { onQuickAction("التعميمات") })
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         recentNews.take(3).forEach { item ->
                             RecentNewsItem(item) { onQuickAction("التعميمات") }
@@ -99,10 +139,26 @@ fun AdminDashboardScreen(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    QuickActionItem("إضافة فصل", Icons.Default.AddHomeWork, BluePrimary) { onQuickAction("إضافة فصل") }
-                    QuickActionItem("إرسال تنبيه", Icons.Default.Campaign, AmberPrimary) { onQuickAction("التعميمات") }
-                    QuickActionItem("إضافة مستخدم", Icons.Default.PersonAdd, MintPrimary) { onQuickAction("المستخدمون") }
-                    QuickActionItem("الشكاوى", Icons.Default.Feedback, ColorError) { onQuickAction("الشكاوى") }
+                    QuickActionItem(
+                        "إضافة فصل",
+                        Icons.Default.AddHomeWork,
+                        BluePrimary
+                    ) { onQuickAction("إضافة فصل") }
+                    QuickActionItem(
+                        "إرسال تنبيه",
+                        Icons.Default.Campaign,
+                        AmberPrimary
+                    ) { onQuickAction("التعميمات") }
+                    QuickActionItem(
+                        "إضافة مستخدم",
+                        Icons.Default.PersonAdd,
+                        MintPrimary
+                    ) { onQuickAction("المستخدمون") }
+                    QuickActionItem(
+                        "الشكاوى",
+                        Icons.Default.Feedback,
+                        ColorError
+                    ) { onQuickAction("الشكاوى") }
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -110,7 +166,7 @@ fun AdminDashboardScreen(
                 // ── System Health Widget ────────────────────
                 SectionHeader("التقارير والإحصائيات")
                 RawdatyCard(
-                    modifier = Modifier.fillMaxWidth(), 
+                    modifier = Modifier.fillMaxWidth(),
                     containerColor = BlueLight.copy(alpha = 0.5f),
                     elevation = 0.dp
                 ) {
@@ -122,25 +178,35 @@ fun AdminDashboardScreen(
                                 .background(White),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Analytics, null, tint = BluePrimary, modifier = Modifier.size(24.dp))
+                            Icon(
+                                Icons.Default.Analytics,
+                                null,
+                                tint = BluePrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                         Spacer(Modifier.width(16.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "عرض التقارير التفصيلية", 
-                                style = MaterialTheme.typography.titleSmall, 
-                                color = BluePrimary, 
+                                "عرض التقارير التفصيلية",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = BluePrimary,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = CairoFontFamily
                             )
                             Text(
-                                "تحليل أداء المعلمات وحضور الطلاب", 
-                                style = MaterialTheme.typography.bodySmall, 
+                                "تحليل أداء المعلمات وحضور الطلاب",
+                                style = MaterialTheme.typography.bodySmall,
                                 color = BluePrimary.copy(0.7f),
                                 fontFamily = CairoFontFamily
                             )
                         }
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BluePrimary, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            null,
+                            tint = BluePrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
 
@@ -153,49 +219,57 @@ fun AdminDashboardScreen(
 @Composable
 private fun RecentNewsItem(news: News, onClick: () -> Unit) {
     RawdatyCard(
-        modifier = Modifier.fillMaxWidth(), 
+        modifier = Modifier.fillMaxWidth(),
         containerColor = White,
         onClick = onClick,
         elevation = 2.dp
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Box(
                 Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if(news.isPinned) AmberLight else BlueLight), 
+                    .background(if (news.isPinned) AmberLight else BlueLight),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    if(news.isPinned) Icons.Default.PushPin else Icons.Default.Description, 
-                    null, 
-                    tint = if(news.isPinned) AmberPrimary else BluePrimary, 
+                    if (news.isPinned) Icons.Default.PushPin else Icons.Default.Description,
+                    null,
+                    tint = if (news.isPinned) AmberPrimary else BluePrimary,
                     modifier = Modifier.size(20.dp)
                 )
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    news.title, 
-                    style = MaterialTheme.typography.bodyLarge, 
-                    fontWeight = FontWeight.SemiBold, 
-                    maxLines = 1, 
+                    news.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     fontFamily = CairoFontFamily
                 )
                 Text(
-                    news.createdAt, 
-                    style = MaterialTheme.typography.labelSmall, 
+                    news.createdAt,
+                    style = MaterialTheme.typography.labelSmall,
                     color = Gray400,
                     fontFamily = CairoFontFamily
                 )
             }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null, tint = Gray300, modifier = Modifier.size(20.dp))
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                null,
+                tint = Gray300,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun QuickActionItem(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit) {
+private fun QuickActionItem(label: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -215,13 +289,46 @@ private fun QuickActionItem(label: String, icon: androidx.compose.ui.graphics.ve
             Icon(icon, null, tint = color, modifier = Modifier.size(28.dp))
         }
         Text(
-            label, 
-            style = MaterialTheme.typography.labelSmall, 
-            color = Gray700, 
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Gray700,
             fontWeight = FontWeight.Bold,
             fontFamily = CairoFontFamily,
             textAlign = TextAlign.Center,
             maxLines = 1
+        )
+    }
+}
+
+@Preview
+@Composable
+fun AdminDashboardPreview() {
+    RawdatyTheme {
+        AdminDashboardScreen(
+            totalParents = 120,
+            totalTeachers = 15,
+            totalClasses = 8,
+            recentNews = listOf(
+                News(
+                    1,
+                    "بدء التسجيل للترم الثاني",
+                    "يسرنا إبلاغكم بفتح باب التسجيل المبكر للفصل الدراسي القادم.",
+                    "الإدارة",
+                    true,
+                    "Mohanned",
+                    "24 مارس"
+                ),
+                News(
+                    2,
+                    "تحديثات نظام الروضة",
+                    "تم إضافة مميزات جديدة لنظام إدارة الحضور والغياب.",
+                    "الدعم الفني",
+                    true,
+                    "Mohanned",
+                    "24 مارس"
+                )
+            ),
+            isLoading = false
         )
     }
 }

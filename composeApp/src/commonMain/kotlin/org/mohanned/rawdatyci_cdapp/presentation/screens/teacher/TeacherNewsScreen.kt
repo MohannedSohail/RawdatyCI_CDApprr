@@ -1,27 +1,61 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.teacher
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.PersonOutline
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Newspaper
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.mohanned.rawdatyci_cdapp.domain.model.News
-import org.mohanned.rawdatyci_cdapp.presentation.components.*
-import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.components.EmptyState
+import org.mohanned.rawdatyci_cdapp.presentation.components.GlassHeader
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyCard
+import org.mohanned.rawdatyci_cdapp.presentation.components.SectionHeader
+import org.mohanned.rawdatyci_cdapp.presentation.theme.AmberPrimary
+import org.mohanned.rawdatyci_cdapp.presentation.theme.AppBg
+import org.mohanned.rawdatyci_cdapp.presentation.theme.BlueDark
+import org.mohanned.rawdatyci_cdapp.presentation.theme.BlueLight
+import org.mohanned.rawdatyci_cdapp.presentation.theme.BluePrimary
+import org.mohanned.rawdatyci_cdapp.presentation.theme.CairoFontFamily
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray200
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray300
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray400
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray500
+import org.mohanned.rawdatyci_cdapp.presentation.theme.RawdatyGradients
+import org.mohanned.rawdatyci_cdapp.presentation.theme.RawdatyTheme
+import org.mohanned.rawdatyci_cdapp.presentation.theme.White
 
 @Composable
 fun TeacherNewsScreen(
@@ -34,7 +68,7 @@ fun TeacherNewsScreen(
         containerColor = AppBg,
         topBar = {
             GlassHeader(
-                title = "مركز الأخبار والإعلانات", 
+                title = "مركز الأخبار والإعلانات",
                 onBack = onBack,
                 gradient = RawdatyGradients.HeroBlue,
                 headerHeight = 140.dp
@@ -89,8 +123,11 @@ fun TeacherNewsScreen(
                                         )
                                     )
                             )
-                            
-                            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -130,7 +167,12 @@ fun TeacherNewsScreen(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     modifier = Modifier.padding(top = 8.dp)
                                 ) {
-                                    Icon(Icons.Default.Schedule, null, tint = White.copy(0.6f), modifier = Modifier.size(14.dp))
+                                    Icon(
+                                        Icons.Default.Schedule,
+                                        null,
+                                        tint = White.copy(0.6f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
                                     Text(
                                         item.createdAt,
                                         style = MaterialTheme.typography.labelSmall,
@@ -174,7 +216,10 @@ fun TeacherNewsScreen(
                                     modifier = Modifier.size(32.dp),
                                 )
                             }
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(
+                                Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
                                 Text(
                                     item.title,
                                     style = MaterialTheme.typography.titleSmall,
@@ -197,7 +242,12 @@ fun TeacherNewsScreen(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     modifier = Modifier.padding(top = 4.dp)
                                 ) {
-                                    Icon(Icons.Default.PersonOutline, null, tint = Gray400, modifier = Modifier.size(14.dp))
+                                    Icon(
+                                        Icons.Default.PersonOutline,
+                                        null,
+                                        tint = Gray400,
+                                        modifier = Modifier.size(14.dp)
+                                    )
                                     Text(
                                         item.authorName,
                                         style = MaterialTheme.typography.labelSmall,
@@ -231,8 +281,37 @@ fun TeacherNewsScreen(
 @Composable
 fun TeacherNewsPreview() {
     RawdatyTheme {
+        val dummyNews = listOf(
+            News(
+                1,
+                "بدء التسجيل للرحلة السنوية",
+                "يسرنا إبلاغكم بفتح باب التسجيل للرحلة الميدانية السنوية إلى حديقة الحيوان لجميع الطلاب.",
+                "سارة أحمد",
+                false,
+                "Moahnned Sohail",
+                createdAt = "2024-03-24"
+            ),
+            News(
+                2,
+                "تغيير في مواعيد الحصص",
+                "سيتم تأجيل حصة الرسم يوم غد لمدة ساعة واحدة نظراً لإقامة نشاط رياضي خارجي.",
+                "إدارة الروضة",
+                false,
+                "Moahnned Sohail",
+                createdAt = "2024-03-24"
+            ),
+            News(
+                3,
+                "توزيع شهادات التميز",
+                "سيتم توزيع شهادات التميز على الطلاب المتفوقين في فصل النجوم يوم الخميس القادم.",
+                "أ. نورة علي",
+                false,
+                "Moahnned Sohail",
+                createdAt = "2024-03-24"
+            )
+        )
         TeacherNewsScreen(
-            news = emptyList(),
+            news = dummyNews,
             isLoading = false,
             onNewsClick = {},
             onBack = {},

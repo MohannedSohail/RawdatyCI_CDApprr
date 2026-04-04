@@ -23,6 +23,7 @@ import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 
 @Composable
+@Preview
 fun AdminComplaintsScreen(
     complaints: List<Complaint>,
     selectedTab: Int,
