@@ -12,6 +12,15 @@ import org.mohanned.rawdatyci_cdapp.core.network.remote.TokenStorage
 import org.mohanned.rawdatyci_cdapp.core.network.remote.buildHttpClient
 import org.mohanned.rawdatyci_cdapp.data.local.AppPreferences
 import com.rawdaty.db.RawdatyDatabase
+import org.mohanned.rawdatyci_cdapp.data.MockAttendanceRepository
+import org.mohanned.rawdatyci_cdapp.data.MockAuthRepository
+import org.mohanned.rawdatyci_cdapp.data.MockChatRepository
+import org.mohanned.rawdatyci_cdapp.data.MockClassesRepository
+import org.mohanned.rawdatyci_cdapp.data.MockComplaintsRepository
+import org.mohanned.rawdatyci_cdapp.data.MockGamesRepository
+import org.mohanned.rawdatyci_cdapp.data.MockNewsRepository
+import org.mohanned.rawdatyci_cdapp.data.MockNotificationsRepository
+import org.mohanned.rawdatyci_cdapp.data.MockUsersRepository
 import org.mohanned.rawdatyci_cdapp.data.local.createDataStore
 import org.mohanned.rawdatyci_cdapp.data.remote.api.*
 import org.mohanned.rawdatyci_cdapp.domain.repository.*
@@ -52,19 +61,32 @@ fun commonModule() = module {
     single<UsersApiService> { UsersApiService(get()) }
 }
 
+
 val repositoryModule = module {
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
-    single<ClassesRepository> { ClassesRepositoryImpl(get(), get()) }
-    single<AttendanceRepository> { AttendanceRepositoryImpl(get(), get()) }
-    single<ChatRepository> { ChatRepositoryImpl(get(), get()) }
-    single<NewsRepository> { NewsRepositoryImpl(get(), get()) }
-    single<ComplaintsRepository> { ComplaintsRepositoryImpl(get(), get()) }
-    single<NotificationsRepository> { NotificationsRepositoryImpl(get(), get()) }
-    single<GamesRepository> { GamesRepositoryImpl(get()) }
-    single<UsersRepository> { UsersRepositoryImpl(get(), get()) }
-    single<SyncRepository> { SyncRepository(get(), get(), get(), get()) }
-    single<SyncManager> { SyncManager(get(), get()) }
+    single<AuthRepository>          { MockAuthRepository() }
+    single<UsersRepository>         { MockUsersRepository() }
+    single<ClassesRepository>       { MockClassesRepository() }
+    single<AttendanceRepository>    { MockAttendanceRepository() }
+    single<ChatRepository>          { MockChatRepository() }
+    single<NewsRepository>          { MockNewsRepository() }
+    single<ComplaintsRepository>    { MockComplaintsRepository() }
+    single<NotificationsRepository> { MockNotificationsRepository() }
+    single<GamesRepository>         { MockGamesRepository() }
 }
+
+//val repositoryModule = module {
+//    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+//    single<ClassesRepository> { ClassesRepositoryImpl(get(), get()) }
+//    single<AttendanceRepository> { AttendanceRepositoryImpl(get(), get()) }
+//    single<ChatRepository> { ChatRepositoryImpl(get(), get()) }
+//    single<NewsRepository> { NewsRepositoryImpl(get(), get()) }
+//    single<ComplaintsRepository> { ComplaintsRepositoryImpl(get(), get()) }
+//    single<NotificationsRepository> { NotificationsRepositoryImpl(get(), get()) }
+//    single<GamesRepository> { GamesRepositoryImpl(get()) }
+//    single<UsersRepository> { UsersRepositoryImpl(get(), get()) }
+//    single<SyncRepository> { SyncRepository(get(), get(), get(), get()) }
+//    single<SyncManager> { SyncManager(get(), get()) }
+//}
 
 val viewModelModule = module {
     factory<AuthViewModel> { AuthViewModel(get(), get()) }

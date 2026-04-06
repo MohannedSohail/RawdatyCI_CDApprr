@@ -247,7 +247,7 @@ fun ProfilePreview() {
     RawdatyTheme {
         ProfileScreen(
             user = null,
-            name = "محمد العلي",
+            name = "مهند سهيل",
             phone = "0501234567",
             isLoading = false,
             isSaving = false,

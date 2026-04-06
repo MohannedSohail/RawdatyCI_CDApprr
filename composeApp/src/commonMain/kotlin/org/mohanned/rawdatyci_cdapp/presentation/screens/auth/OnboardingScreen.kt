@@ -70,7 +70,8 @@ import rawdatyci_cdapp.composeapp.generated.resources.onboarding2
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun OnboardingScreen(
+fun
+        OnboardingScreen(
     onFinished: () -> Unit = {}
 ) {
     val pages = listOf(
@@ -119,7 +120,7 @@ fun OnboardingScreen(
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .aspectRatio(0.85f)
+                                .aspectRatio(1f)
                                 .clip(RoundedCornerShape(24.dp)),
                             contentScale = ContentScale.FillBounds
                         )
