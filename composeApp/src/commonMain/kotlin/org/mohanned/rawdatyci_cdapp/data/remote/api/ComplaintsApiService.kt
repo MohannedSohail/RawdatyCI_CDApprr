@@ -1,65 +1,60 @@
 package org.mohanned.rawdatyci_cdapp.data.remote.api
 
 import io.ktor.client.HttpClient
-import io.ktor.client.request.*
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiConfig
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.core.network.remote.safeApiCall
+import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
+import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiListDto
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.ComplaintDto
 
-class ComplaintsApiService(private val client: HttpClient) {
-
-    // GET /api/v1/complaints
-    suspend fun getComplaints(
-        status: String? = null,
-        page: Int = 1,
-    ): ApiResponse<ApiListDto<ComplaintDto>> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/complaints") {
-                status?.let { parameter("status", it) }
-                parameter("page", page)
-            }
-        }
-
-    // GET /api/v1/complaints/:id
-    suspend fun getComplaint(
-        id: Int,
-    ): ApiResponse<ComplaintDto> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/complaints/$id")
-        }
-
-    // POST /api/v1/complaints
-    suspend fun createComplaint(
+interface ComplaintsApiService {
+    suspend fun getComplaints(type: String?, page: Int): ApiResponse<ApiListDto<ComplaintDto>>
+    suspend fun getComplaint(id: String): ApiResponse<ComplaintDto>
+    suspend fun submitComplaint(
         title: String,
-        body: String,
-    ): ApiResponse<ComplaintDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/complaints") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "title" to title,
-                    "body"  to body,
-                ))
-            }
-        }
+        content: String,
+        type: String
+    ): ApiResponse<ComplaintDto>
 
-    // POST /api/v1/complaints/:id/reply
-    suspend fun replyToComplaint(
-        id: Int,
-        reply: String,
-        status: String,
-    ): ApiResponse<ComplaintDto> =
+    suspend fun replyToComplaint(id: String, reply: String): ApiResponse<ComplaintDto>
+}
+
+class ComplaintsApiServiceImpl(private val client: HttpClient) : ComplaintsApiService {
+    override suspend fun getComplaints(
+        type: String?,
+        page: Int
+    ): ApiResponse<ApiListDto<ComplaintDto>> = safeApiCall {
+        client.get("complaints") {
+            parameter("type", type)
+            parameter("page", page)
+        }
+    }
+
+    override suspend fun getComplaint(id: String): ApiResponse<ComplaintDto> = safeApiCall {
+        client.get("complaints/$id")
+    }
+
+    override suspend fun submitComplaint(
+        title: String,
+        content: String,
+        type: String
+    ): ApiResponse<ComplaintDto> = safeApiCall {
+        client.post("complaints") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("title" to title, "content" to content, "type" to type))
+        }
+    }
+
+    override suspend fun replyToComplaint(id: String, reply: String): ApiResponse<ComplaintDto> =
         safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/complaints/$id/reply") {
+            client.post("complaints/$id/reply") {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "reply"  to reply,
-                    "status" to status,
-                ))
+                setBody(mapOf("reply" to reply))
             }
         }
 }

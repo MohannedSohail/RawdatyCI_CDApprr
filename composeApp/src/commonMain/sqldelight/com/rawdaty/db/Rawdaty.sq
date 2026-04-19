@@ -1,105 +1,137 @@
 -- Schema
+
 CREATE TABLE auth_cache (
-    id INTEGER NOT NULL PRIMARY KEY DEFAULT 1,
-    user_id INTEGER NOT NULL,
-    user_name TEXT NOT NULL DEFAULT '',
-    user_email TEXT NOT NULL DEFAULT '',
-    user_role TEXT NOT NULL DEFAULT '',
-    tenant_slug TEXT NOT NULL DEFAULT '',
-    avatar_url TEXT,
-    cached_at TEXT NOT NULL DEFAULT ''
+    id          INTEGER NOT NULL PRIMARY KEY DEFAULT 1,
+    user_id     TEXT    NOT NULL DEFAULT '',
+    user_name   TEXT    NOT NULL DEFAULT '',
+    user_email  TEXT    NOT NULL DEFAULT '',
+    user_role   TEXT    NOT NULL DEFAULT '',
+    tenant_slug TEXT    NOT NULL DEFAULT '',
+    avatar_url  TEXT,
+    cached_at   TEXT    NOT NULL DEFAULT ''
 );
 
 CREATE TABLE classes_cache (
-    id INTEGER NOT NULL PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    teacher_id INTEGER,
-    teacher_name TEXT,
+    id             TEXT    NOT NULL PRIMARY KEY,
+    name           TEXT    NOT NULL,
+    description    TEXT,
+    teacher_id     TEXT,
+    teacher_name   TEXT,
     children_count INTEGER NOT NULL DEFAULT 0,
-    capacity INTEGER,
-    academic_year TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT ''
+    capacity       INTEGER,
+    academic_year  TEXT    NOT NULL DEFAULT '',
+    created_at     TEXT    NOT NULL DEFAULT ''
 );
 
 CREATE TABLE children_cache (
-    id INTEGER NOT NULL PRIMARY KEY,
-    full_name TEXT NOT NULL,
-    date_of_birth TEXT,
-    gender TEXT NOT NULL DEFAULT '',
-    photo_url TEXT,
-    class_id INTEGER NOT NULL,
-    class_name TEXT NOT NULL DEFAULT '',
-    parent_id INTEGER,
-    parent_name TEXT,
-    parent_phone TEXT,
-    enrollment_date TEXT NOT NULL DEFAULT '',
-    stars INTEGER NOT NULL DEFAULT 0,
-    notes TEXT,
-    synced_at TEXT NOT NULL DEFAULT ''
+    id              TEXT    NOT NULL PRIMARY KEY,
+    full_name       TEXT    NOT NULL,
+    date_of_birth   TEXT,
+    gender          TEXT    NOT NULL DEFAULT '',
+    photo_url       TEXT,
+    class_id        TEXT    NOT NULL DEFAULT '',
+    class_name      TEXT    NOT NULL DEFAULT '',
+    parent_id       TEXT,
+    parent_name     TEXT,
+    parent_phone    TEXT,
+    enrollment_date TEXT    NOT NULL DEFAULT '',
+    stars           INTEGER NOT NULL DEFAULT 0,
+    notes           TEXT,
+    synced_at       TEXT    NOT NULL DEFAULT '',
+    sync_status     TEXT    NOT NULL DEFAULT 'synced'
 );
 
 CREATE TABLE attendance_cache (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    class_id INTEGER NOT NULL,
-    child_id INTEGER NOT NULL,
-    child_name TEXT NOT NULL DEFAULT '',
-    date TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'present',
-    notes TEXT,
-    sync_status TEXT NOT NULL DEFAULT 'synced'
+    id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    class_id    TEXT    NOT NULL DEFAULT '',
+    child_id    TEXT    NOT NULL DEFAULT '',
+    child_name  TEXT    NOT NULL DEFAULT '',
+    date        TEXT    NOT NULL,
+    status      TEXT    NOT NULL DEFAULT 'present',
+    notes       TEXT,
+    sync_status TEXT    NOT NULL DEFAULT 'synced'
 );
 
 CREATE TABLE news_cache (
-    id INTEGER NOT NULL PRIMARY KEY,
-    title TEXT NOT NULL,
-    body TEXT NOT NULL,
-    image_url TEXT,
-    author_name TEXT NOT NULL DEFAULT '',
-    is_pinned INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL
+    id          TEXT    NOT NULL PRIMARY KEY,
+    title       TEXT    NOT NULL,
+    body        TEXT    NOT NULL DEFAULT '',
+    image_url   TEXT,
+    author_name TEXT    NOT NULL DEFAULT '',
+    is_pinned   INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT '',
+    sync_status TEXT    NOT NULL DEFAULT 'synced'
 );
 
 CREATE TABLE notifications_cache (
-    id INTEGER NOT NULL PRIMARY KEY,
-    title TEXT NOT NULL,
-    body TEXT NOT NULL,
-    type TEXT NOT NULL DEFAULT 'general',
-    is_read INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL
+    id         TEXT    NOT NULL PRIMARY KEY,
+    title      TEXT    NOT NULL,
+    body       TEXT    NOT NULL,
+    type       TEXT    NOT NULL DEFAULT 'general',
+    is_read    INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT    NOT NULL DEFAULT ''
 );
 
 CREATE TABLE complaints_cache (
-    id INTEGER NOT NULL PRIMARY KEY,
-    title TEXT NOT NULL,
-    body TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    parent_id INTEGER NOT NULL DEFAULT 0,
-    parent_name TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL,
-    reply TEXT
+    id          TEXT    NOT NULL PRIMARY KEY,
+    title       TEXT    NOT NULL DEFAULT '',
+    body        TEXT    NOT NULL DEFAULT '',
+    status      TEXT    NOT NULL DEFAULT 'pending',
+    parent_id   TEXT    NOT NULL DEFAULT '',
+    parent_name TEXT    NOT NULL DEFAULT '',
+    created_at  TEXT    NOT NULL DEFAULT '',
+    reply       TEXT,
+    sync_status TEXT    NOT NULL DEFAULT 'synced'
+);
+
+CREATE TABLE conversations_cache (
+    id               TEXT    NOT NULL PRIMARY KEY,
+    recipient_id     TEXT    NOT NULL,
+    recipient_name   TEXT    NOT NULL,
+    recipient_avatar TEXT,
+    last_message     TEXT    NOT NULL DEFAULT '',
+    last_timestamp   TEXT    NOT NULL DEFAULT '',
+    unread_count     INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE messages_cache (
-    id INTEGER NOT NULL PRIMARY KEY,
-    conversation_id INTEGER NOT NULL,
-    sender_id INTEGER NOT NULL,
-    sender_name TEXT NOT NULL DEFAULT '',
-    content TEXT NOT NULL,
-    image_url TEXT,
-    is_read INTEGER NOT NULL DEFAULT 0,
-    sent_at TEXT NOT NULL
+    id              TEXT    NOT NULL PRIMARY KEY,
+    conversation_id TEXT    NOT NULL DEFAULT '',
+    sender_id       TEXT    NOT NULL DEFAULT '',         
+    sender_name     TEXT    NOT NULL DEFAULT '',
+    content         TEXT    NOT NULL,
+    image_url       TEXT,
+    is_read         INTEGER NOT NULL DEFAULT 0,
+    is_from_me      INTEGER NOT NULL DEFAULT 0,
+    sent_at         TEXT    NOT NULL DEFAULT '',
+    sync_status     TEXT    NOT NULL DEFAULT 'synced'
+);
+
+CREATE TABLE users_cache (
+    id          TEXT    NOT NULL PRIMARY KEY,
+    name        TEXT    NOT NULL,
+    email       TEXT    NOT NULL,
+    role        TEXT    NOT NULL,
+    phone       TEXT,
+    is_active   INTEGER NOT NULL DEFAULT 1,
+    avatar_url  TEXT,
+    class_id    TEXT,
+    class_name  TEXT,
+    created_at  TEXT    NOT NULL DEFAULT ''
 );
 
 CREATE TABLE offline_actions (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    action_type TEXT NOT NULL,
-    payload TEXT NOT NULL,
-    created_at TEXT NOT NULL,
+    id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    action_type TEXT    NOT NULL,
+    payload     TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL,
     retry_count INTEGER NOT NULL DEFAULT 0
 );
 
+-- ═══════════════════════════════════════════════════════════════════════════
 -- Queries
+-- ═══════════════════════════════════════════════════════════════════════════
+
 upsertAuthCache:
 INSERT OR REPLACE INTO auth_cache(id, user_id, user_name, user_email, user_role, tenant_slug, avatar_url, cached_at)
 VALUES (1, ?, ?, ?, ?, ?, ?, ?);
@@ -110,18 +142,26 @@ SELECT * FROM auth_cache WHERE id = 1;
 clearAuthCache:
 DELETE FROM auth_cache;
 
+-- Classes
 upsertClass:
-INSERT OR REPLACE INTO classes_cache VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO classes_cache
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getAllClasses:
 SELECT * FROM classes_cache;
 
 searchClasses:
-SELECT * FROM classes_cache 
-WHERE name LIKE ('%' || :query || '%') OR teacher_name LIKE ('%' || :query || '%');
+SELECT * FROM classes_cache
+WHERE name LIKE ('%' || :query || '%')
+   OR teacher_name LIKE ('%' || :query || '%');
 
+deleteClass:
+DELETE FROM classes_cache WHERE id = ?;
+
+-- Children
 upsertChild:
-INSERT OR REPLACE INTO children_cache VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO children_cache
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getChildrenByClass:
 SELECT * FROM children_cache WHERE class_id = ?;
@@ -129,50 +169,117 @@ SELECT * FROM children_cache WHERE class_id = ?;
 getChildById:
 SELECT * FROM children_cache WHERE id = ?;
 
+getAllChildren:
+SELECT * FROM children_cache;
+
+-- Attendance
 upsertAttendance:
-INSERT OR REPLACE INTO attendance_cache (class_id, child_id, child_name, date, status, notes, sync_status)
+INSERT OR REPLACE INTO attendance_cache
+    (class_id, child_id, child_name, date, status, notes, sync_status)
 VALUES (?, ?, ?, ?, ?, ?, ?);
 
 getAttendanceByClassAndDate:
 SELECT * FROM attendance_cache WHERE class_id = ? AND date = ?;
 
+getAttendanceByChild:
+SELECT * FROM attendance_cache WHERE child_id = ? ORDER BY date DESC;
+
 getPendingAttendance:
 SELECT * FROM attendance_cache WHERE sync_status = 'pending';
 
+-- News
 upsertNews:
-INSERT OR REPLACE INTO news_cache VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO news_cache
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 getAllNews:
 SELECT * FROM news_cache ORDER BY is_pinned DESC, created_at DESC;
 
 searchNews:
-SELECT * FROM news_cache 
-WHERE title LIKE ('%' || :query || '%') OR body LIKE ('%' || :query || '%')
+SELECT * FROM news_cache
+WHERE title LIKE ('%' || :query || '%')
+   OR body  LIKE ('%' || :query || '%')
 ORDER BY is_pinned DESC, created_at DESC;
 
+deleteNews:
+DELETE FROM news_cache WHERE id = ?;
+
+-- Notifications
 upsertNotification:
-INSERT OR REPLACE INTO notifications_cache VALUES (?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO notifications_cache
+VALUES (?, ?, ?, ?, ?, ?);
 
 getAllNotifications:
 SELECT * FROM notifications_cache ORDER BY created_at DESC;
 
+markNotificationRead:
+UPDATE notifications_cache SET is_read = 1 WHERE id = ?;
+
+markAllNotificationsRead:
+UPDATE notifications_cache SET is_read = 1;
+
+-- Complaints
 upsertComplaint:
-INSERT OR REPLACE INTO complaints_cache VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO complaints_cache
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getAllComplaints:
 SELECT * FROM complaints_cache ORDER BY created_at DESC;
 
+getComplaintById:
+SELECT * FROM complaints_cache WHERE id = ?;
+
+-- Conversations
+upsertConversation:
+INSERT OR REPLACE INTO conversations_cache
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+getAllConversations:
+SELECT * FROM conversations_cache ORDER BY last_timestamp DESC;
+
+getConversationById:
+SELECT * FROM conversations_cache WHERE id = ?;
+
+-- Messages
 upsertChatMessage:
-INSERT OR REPLACE INTO messages_cache VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO messages_cache
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getChatMessages:
-SELECT * FROM messages_cache WHERE conversation_id = ? ORDER BY sent_at ASC;
+SELECT * FROM messages_cache
+WHERE conversation_id = ?
+ORDER BY sent_at ASC;
 
+-- Users
+upsertUser:
+INSERT OR REPLACE INTO users_cache
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllUsers:
+SELECT * FROM users_cache ORDER BY created_at DESC;
+
+getUsersByRole:
+SELECT * FROM users_cache WHERE role = ? ORDER BY created_at DESC;
+
+searchUsers:
+SELECT * FROM users_cache
+WHERE name LIKE ('%' || :query || '%')
+   OR phone LIKE ('%' || :query || '%')
+ORDER BY created_at DESC;
+
+deleteUserCache:
+DELETE FROM users_cache WHERE id = ?;
+
+-- Offline Actions
 insertOfflineAction:
-INSERT INTO offline_actions (action_type, payload, created_at, retry_count) VALUES (?, ?, ?, ?);
+INSERT INTO offline_actions (action_type, payload, created_at, retry_count)
+VALUES (?, ?, ?, ?);
 
 getPendingOfflineActions:
 SELECT * FROM offline_actions ORDER BY created_at ASC;
 
 deleteOfflineAction:
 DELETE FROM offline_actions WHERE id = ?;
+
+incrementRetryCount:
+UPDATE offline_actions SET retry_count = retry_count + 1 WHERE id = ?;

@@ -2,75 +2,46 @@ package org.mohanned.rawdatyci_cdapp.data.remote.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.*
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiConfig
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.core.network.remote.safeApiCall
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiListDto
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiMessageDto
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.NewsDto
+import io.ktor.http.*
+import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
+import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
+import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 
-class NewsApiService(private val client: HttpClient) {
+interface NewsApiService {
+    suspend fun getNews(type: String?, page: Int): ApiResponse<ApiListDto<NewsDto>>
+    suspend fun getNewsById(id: String): ApiResponse<NewsDto>
+    suspend fun createNews(title: String, body: String, type: String, isVisible: Boolean): ApiResponse<NewsDto>
+    suspend fun updateNews(id: String, title: String?, body: String?, type: String?, isVisible: Boolean?): ApiResponse<NewsDto>
+    suspend fun deleteNews(id: String): ApiResponse<Unit>
+}
 
-    // GET /api/v1/news
-    suspend fun getNews(
-        search: String? = null,
-        page: Int = 1,
-    ): ApiResponse<ApiListDto<NewsDto>> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/news") {
-                parameter("search", search)
-                parameter("page", page)
-            }
+class NewsApiServiceImpl(private val client: HttpClient) : NewsApiService {
+    override suspend fun getNews(type: String?, page: Int): ApiResponse<ApiListDto<NewsDto>> = safeApiCall {
+        client.get("news") {
+            parameter("type", type)
+            parameter("page", page)
         }
+    }
 
-    // GET /api/v1/news/:id
-    suspend fun getNewsItem(
-        id: Int,
-    ): ApiResponse<NewsDto> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/news/$id")
-        }
+    override suspend fun getNewsById(id: String): ApiResponse<NewsDto> = safeApiCall {
+        client.get("news/$id")
+    }
 
-    // POST /api/v1/news
-    suspend fun createNews(
-        title: String,
-        body: String,
-        isPinned: Boolean = false,
-    ): ApiResponse<NewsDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/news") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "title"     to title,
-                    "body"      to body,
-                    "is_pinned" to isPinned,
-                ))
-            }
+    override suspend fun createNews(title: String, body: String, type: String, isVisible: Boolean): ApiResponse<NewsDto> = safeApiCall {
+        client.post("news") {
+            contentType(ContentType.Application.Json)
+            setBody(CreateNewsRequest(title, body, type, isVisible))
         }
+    }
 
-    // PUT /api/v1/news/:id
-    suspend fun updateNews(
-        id: Int,
-        title: String?,
-        body: String?,
-    ): ApiResponse<NewsDto> =
-        safeApiCall {
-            client.put("${ApiConfig.BASE_URL}/news/$id") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "title" to title,
-                    "body"  to body,
-                ))
-            }
+    override suspend fun updateNews(id: String, title: String?, body: String?, type: String?, isVisible: Boolean?): ApiResponse<NewsDto> = safeApiCall {
+        client.put("news/$id") {
+            contentType(ContentType.Application.Json)
+            setBody(UpdateNewsRequest(title, body, type, isVisible))
         }
+    }
 
-    // DELETE /api/v1/news/:id
-    suspend fun deleteNews(
-        id: Int,
-    ): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.delete("${ApiConfig.BASE_URL}/news/$id")
-        }
+    override suspend fun deleteNews(id: String): ApiResponse<Unit> = safeApiCall {
+        client.delete("news/$id")
+    }
 }

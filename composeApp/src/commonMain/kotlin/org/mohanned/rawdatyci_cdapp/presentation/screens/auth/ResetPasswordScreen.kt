@@ -1,215 +1,93 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.auth
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
-import org.mohanned.rawdatyci_cdapp.presentation.components.*
+import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyButton
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyField
+import org.mohanned.rawdatyci_cdapp.presentation.components.WaveHeader
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ForgotPasswordEffect
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ForgotPasswordIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ForgotPasswordViewModel
 
-@Composable
-fun ResetPasswordScreen(
-    newPassword: String,
-    confirmPassword: String,
-    isLoading: Boolean,
-    error: String?,
-    onNewPasswordChange: (String) -> Unit,
-    onConfirmChange: (String) -> Unit,
-    onSubmit: () -> Unit,
-    onBack: () -> Unit,
-) {
-    Scaffold(
-        containerColor = White
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Premium Gradient Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.38f)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color(0xFF0F2A3E), Color(0xFF1E4C6F))
-                        )
-                    )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                        .statusBarsPadding(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        IconButton(
-                            onClick = onBack,
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .clip(CircleShape)
-                                .background(White.copy(0.15f))
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = White)
-                        }
-                    }
-                    
-                    Spacer(Modifier.height(32.dp))
-                    
-                    Surface(
-                        modifier = Modifier.size(72.dp),
-                        shape = CircleShape,
-                        color = White.copy(0.1f),
-                        border = BorderStroke(1.dp, White.copy(0.2f))
-                    ) {
-                        Icon(Icons.Outlined.VerifiedUser, null, tint = White, modifier = Modifier.padding(16.dp))
-                    }
-                    
-                    Spacer(Modifier.height(20.dp))
-                    
-                    Text(
-                        "تغيير كلمة المرور",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = White,
-                        fontWeight = FontWeight.Black,
-                        fontFamily = CairoFontFamily
-                    )
-                    Text(
-                        "يُرجى تعيين كلمة مرور قوية وجديدة لحسابك",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = White.copy(0.7f),
-                        fontFamily = CairoFontFamily,
-                        textAlign = TextAlign.Center
-                    )
+data class ResetPasswordScreen(val resetToken: String) : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: ForgotPasswordViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+
+        LaunchedEffect(Unit) {
+            viewModel.effect.collect { effect ->
+                if (effect is ForgotPasswordEffect.ShowSuccess) {
+                    navigator.replaceAll(LoginScreen())
                 }
             }
+        }
 
-            // Interactive Form Container
+        Scaffold(containerColor = White) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(White)
                     .verticalScroll(rememberScrollState())
             ) {
-                Spacer(Modifier.fillMaxHeight(0.32f))
-                
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = White,
-                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                    shadowElevation = 8.dp
+                WaveHeader(
+                    title = "تعيين كلمة المرور",
+                    subtitle = "يُرجى إدخال كلمة المرور الجديدة",
+                    gradient = RawdatyGradients.Splash,
+                    headerHeight = 220.dp
+                )
+
+                Column(
+                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 40.dp),
-                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        // Password Strength Indicators
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            PasswordRuleChip(
-                                label = "٨ أحرف فأكثر",
-                                met = newPassword.length >= 8,
-                                modifier = Modifier.weight(1f)
-                            )
-                            PasswordRuleChip(
-                                label = "يحتوي أرقام",
-                                met = newPassword.any { it.isDigit() },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        RawdatyField(
-                            value = newPassword,
-                            onValueChange = onNewPasswordChange,
-                            label = "كلمة المرور الجديدة",
-                            placeholder = "••••••••",
-                            leadingIcon = Icons.Outlined.Lock,
-                            isPassword = true
-                        )
-
-                        RawdatyField(
-                            value = confirmPassword,
-                            onValueChange = onConfirmChange,
-                            label = "تأكيد كلمة المرور",
-                            placeholder = "••••••••",
-                            leadingIcon = Icons.Outlined.LockOpen,
-                            isPassword = true,
-                            isError = error != null,
-                            errorMessage = error
-                        )
-
-                        RawdatyButton(
-                            text = "حفظ وإعادة تعيين الحساب",
-                            onClick = onSubmit,
-                            isLoading = isLoading,
-                            backgroundColor = BluePrimary,
-                            modifier = Modifier.fillMaxWidth().height(60.dp)
-                        )
-                        
-                        Spacer(Modifier.height(32.dp))
+                    RawdatyField(
+                        value = state.newPassword,
+                        onValueChange = { viewModel.onIntent(ForgotPasswordIntent.NewPasswordChanged(it)) },
+                        label = "كلمة المرور الجديدة",
+                        leadingIcon = Icons.Outlined.Lock,
+                        isPassword = true
+                    )
+                    RawdatyField(
+                        value = state.confirmPassword,
+                        onValueChange = { viewModel.onIntent(ForgotPasswordIntent.ConfirmPasswordChanged(it)) },
+                        label = "تأكيد كلمة المرور",
+                        leadingIcon = Icons.Outlined.Lock,
+                        isPassword = true
+                    )
+                    
+                    state.error?.let {
+                        Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
                     }
+
+                    Spacer(Modifier.height(12.dp))
+                    
+                    RawdatyButton(
+                        text = "حفظ وتغيير",
+                        onClick = { viewModel.onIntent(ForgotPasswordIntent.ResetPassword(resetToken)) },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        isLoading = state.isLoading
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PasswordRuleChip(label: String, met: Boolean, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = if (met) ColorSuccess.copy(0.1f) else Gray100,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, if (met) ColorSuccess.copy(0.3f) else Gray200)
-    ) {
-        Row(
-            modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                if (met) Icons.Default.CheckCircle else Icons.Outlined.Circle,
-                null,
-                tint = if (met) ColorSuccess else Gray400,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (met) ColorSuccess else Gray500,
-                fontWeight = if (met) FontWeight.Bold else FontWeight.Medium,
-                fontFamily = CairoFontFamily
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ResetPasswordPreview() {
-    RawdatyTheme {
-        ResetPasswordScreen(
-            newPassword = "",
-            confirmPassword = "",
-            isLoading = false,
-            error = null,
-            onNewPasswordChange = {},
-            onConfirmChange = {},
-            onSubmit = {},
-            onBack = {}
-        )
     }
 }

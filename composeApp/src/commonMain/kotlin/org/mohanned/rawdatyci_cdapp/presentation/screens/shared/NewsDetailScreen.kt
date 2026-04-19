@@ -1,265 +1,112 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.shared
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
-import org.mohanned.rawdatyci_cdapp.domain.model.News
-import org.mohanned.rawdatyci_cdapp.presentation.components.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
+import org.mohanned.rawdatyci_cdapp.presentation.components.GlassHeader
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyCard
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NewsIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NewsViewModel
 
-@Composable
-fun NewsDetailScreen(
-    news: News,
-    onBack: () -> Unit,
-    onShare: () -> Unit,
-    onBookmark: () -> Unit,
-) {
-    val scrollState = rememberScrollState()
+data class NewsDetailScreen(val newsId: String) : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: NewsViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
 
-    Scaffold(
-        containerColor = AppBg,
-        topBar = {
-            GlassHeader(
-                title = "تفاصيل الخبر",
-                onBack = onBack,
-                actions = {
-                    IconButton(onClick = onBookmark) {
-                        Icon(Icons.Outlined.BookmarkBorder, null, tint = White)
-                    }
-                    IconButton(onClick = onShare) {
-                        Icon(Icons.Outlined.Share, null, tint = White)
-                    }
-                },
-                gradient = RawdatyGradients.HeroBlue,
-                headerHeight = 140.dp
-            )
+        LaunchedEffect(newsId) {
+            viewModel.onIntent(NewsIntent.LoadNewsDetail(newsId))
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-        ) {
-            // Premium Hero Visual Section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .background(RawdatyGradients.HeroBlue)
-            ) {
-                // Background Decorative Circles
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawCircle(
-                        color = White.copy(alpha = 0.05f),
-                        radius = size.minDimension / 1.2f,
-                        center = Offset(size.width * 0.1f, size.height * 0.2f)
-                    )
-                }
 
-                if (news.isPinned) {
-                    Surface(
-                        modifier = Modifier
-                            .padding(20.dp)
-                            .align(Alignment.TopStart),
-                        color = AmberPrimary,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(Icons.Default.PushPin, null, tint = White, modifier = Modifier.size(14.dp))
+        Scaffold(
+            containerColor = AppBg,
+            topBar = {
+                GlassHeader(
+                    title = "تفاصيل الخبر",
+                    onBack = { navigator.pop() },
+                    gradient = RawdatyGradients.Primary,
+                    headerHeight = 120.dp
+                )
+            }
+        ) { padding ->
+            val news = state.currentNews
+            if (state.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = BluePrimary)
+                }
+            } else if (news == null) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("الخبر غير موجود", fontFamily = CairoFontFamily)
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .padding(padding)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (news.imageUrl != null) {
+                        // Image implementation with Coil would go here
+                        Box(Modifier.fillMaxWidth().height(250.dp).background(Gray200))
+                    }
+
+                    Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Surface(color = BlueLight.copy(0.4f), shape = RoundedCornerShape(8.dp)) {
                             Text(
-                                "إعلان مثبت", 
-                                style = MaterialTheme.typography.labelSmall, 
-                                color = White, 
+                                text = news.type.name,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = BluePrimary,
                                 fontWeight = FontWeight.Bold,
                                 fontFamily = CairoFontFamily
                             )
                         }
-                    }
-                }
 
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        color = White.copy(0.15f),
-                        border = BorderStroke(1.dp, White.copy(0.2f))
-                    ) {
-                        Icon(
-                            Icons.Outlined.Newspaper,
-                            null,
-                            tint = White,
-                            modifier = Modifier.padding(20.dp).size(40.dp)
+                        Text(
+                            text = news.title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Gray900,
+                            fontFamily = CairoFontFamily
+                        )
+
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.AccessTime, null, tint = Gray400, modifier = Modifier.size(16.dp))
+                            Text(news.createdAt, style = MaterialTheme.typography.labelSmall, color = Gray500, fontFamily = CairoFontFamily)
+                            Spacer(Modifier.width(16.dp))
+                            Icon(Icons.Default.Person, null, tint = Gray400, modifier = Modifier.size(16.dp))
+                            Text(news.authorName, style = MaterialTheme.typography.labelSmall, color = Gray500, fontFamily = CairoFontFamily)
+                        }
+
+                        Divider(color = Gray100)
+
+                        Text(
+                            text = news.body,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Gray700,
+                            lineHeight = 28.sp,
+                            fontFamily = CairoFontFamily
                         )
                     }
-                }
-
-                // Smooth Bottom Gradient
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Black.copy(0.3f)),
-                                startY = 150f
-                            )
-                        )
-                )
-            }
-
-            // News Content Card
-            Surface(
-                modifier = Modifier
-                    .offset(y = (-32).dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)),
-                color = White,
-                shadowElevation = 8.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    // Category & Meta Data
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            color = BlueLight.copy(0.4f),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                "الأخبار الرسمية", 
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.labelSmall, 
-                                color = BluePrimary, 
-                                fontWeight = FontWeight.Black,
-                                fontFamily = CairoFontFamily
-                            )
-                        }
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Outlined.Schedule, null, tint = Gray400, modifier = Modifier.size(16.dp))
-                            Text(
-                                news.createdAt, 
-                                style = MaterialTheme.typography.labelSmall, 
-                                color = Gray500,
-                                fontFamily = CairoFontFamily
-                            )
-                        }
-                    }
-
-                    // Headline
-                    Text(
-                        news.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Black,
-                        color = BlueDark,
-                        lineHeight = 36.sp,
-                        fontFamily = CairoFontFamily
-                    )
-
-                    // Author Professional Card
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Gray100,
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            RawdatyAvatar(news.authorName, size = 48.dp, gradient = RawdatyGradients.AvatarBlue)
-                            Column {
-                                Text(
-                                    news.authorName, 
-                                    style = MaterialTheme.typography.titleSmall, 
-                                    fontWeight = FontWeight.Bold, 
-                                    color = BlueDark,
-                                    fontFamily = CairoFontFamily
-                                )
-                                Text(
-                                    "إدارة روضتي - قسم الإعلانات", 
-                                    style = MaterialTheme.typography.labelSmall, 
-                                    color = Gray500,
-                                    fontFamily = CairoFontFamily
-                                )
-                            }
-                        }
-                    }
-
-                    RawdatyDivider()
-
-                    // Detailed Body Text
-                    Text(
-                        text = news.body,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Gray700,
-                        lineHeight = 32.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = CairoFontFamily
-                    )
-
-                    Spacer(Modifier.height(40.dp))
-
-                    // Final Affirmation Button
-                    RawdatyButton(
-                        text = "قرأت الخبر وتفاصيله",
-                        onClick = onBack,
-                        icon = Icons.Outlined.DoneAll,
-                        backgroundColor = BluePrimary,
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
-                    )
-                    
-                    Spacer(Modifier.height(16.dp))
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun NewsDetailPreview() {
-    RawdatyTheme {
-        NewsDetailScreen(
-            news = News(
-                id = 1,
-                title = "تعديل في جدول الحصص للمرحلة التأسيسية",
-                body = "نود إحاطتكم علماً بأنه قد تم إجراء بعض التعديلات الطفيفة على جدول الحصص اليومي.\n\nيرجى من جميع أولياء الأمور الكرام التواجد لاستلام أطفالهم في تمام الساعة ١٢:٣٠ ظهراً بدلاً من ١:٠٠ ظهراً لهذا الأسبوع فقط.\n\nنشكر لكم حسن تعاونكم الدائم معنا.",
-                imageUrl = null,
-                isPinned = true,
-                authorName = "أ. سارة محمد",
-                createdAt = "٥ مارس ٢٠٢٤"
-            ),
-            onBack = {},
-            onShare = {},
-            onBookmark = {}
-        )
     }
 }

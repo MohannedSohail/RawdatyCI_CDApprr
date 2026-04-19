@@ -5,12 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.mohanned.rawdatyci_cdapp.data.local.appContext
 import org.mohanned.rawdatyci_cdapp.di.*
-import org.mohanned.rawdatyci_cdapp.domain.repository.SyncManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,8 +21,6 @@ class MainActivity : ComponentActivity() {
 }
 
 class RawdatyApplication : Application() {
-    private val syncManager: SyncManager by inject()
-
     override fun onCreate() {
         super.onCreate()
         appContext = this
@@ -32,12 +28,11 @@ class RawdatyApplication : Application() {
         startKoin {
             androidContext(this@RawdatyApplication)
             modules(
-                commonModule(),
+                coreModule(),
                 repositoryModule,
                 viewModelModule,
                 platformModule()
             )
         }
-        syncManager.start()
     }
 }

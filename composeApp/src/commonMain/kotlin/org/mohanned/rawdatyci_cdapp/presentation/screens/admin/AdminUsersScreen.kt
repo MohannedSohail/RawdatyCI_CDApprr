@@ -6,49 +6,77 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.domain.model.User
 import org.mohanned.rawdatyci_cdapp.domain.model.UserRole
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.UsersIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.UsersViewModel
+
+object AdminUsersScreen : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: UsersViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+
+        LaunchedEffect(Unit) {
+            viewModel.onIntent(UsersIntent.LoadUsers())
+        }
+
+        AdminUsersScreenContent(
+            state = state,
+            initialRole = null,
+            onUserClick = { user -> navigator.push(AdminUserDetailsScreen(user.id)) },
+            onDelete = { viewModel.onIntent(UsersIntent.DeleteUser(it.id)) },
+            onAdd = { navigator.push(AdminAddEditUserScreen(null)) },
+            onBack = { navigator.pop() },
+            onRefresh = { viewModel.onIntent(UsersIntent.LoadUsers()) },
+            onSearch = { q -> viewModel.onIntent(UsersIntent.LoadUsers(search = q)) },
+            onTabChanged = { role -> viewModel.onIntent(UsersIntent.LoadUsers(role = role)) },
+            onLoadMore = {
+                viewModel.onIntent(UsersIntent.LoadUsers(page = state.page + 1))
+            }
+        )
+    }
+}
 
 @Composable
-fun AdminUsersScreen(
-    users: List<User>,
-    query: String,
-    selectedTab: Int,
-    isLoading: Boolean,
-    isLoadingMore: Boolean,
-    canLoadMore: Boolean,
-    onSearch: (String) -> Unit,
-    onLoadMore: () -> Unit,
-    onTabChange: (Int) -> Unit,
+fun AdminUsersScreenContent(
+    state: org.mohanned.rawdatyci_cdapp.presentation.viewmodel.UsersState,
+    initialRole: String? = null,
     onUserClick: (User) -> Unit,
+    onDelete: (User) -> Unit,
     onAdd: () -> Unit,
     onBack: () -> Unit,
+    onRefresh: () -> Unit,
+    onSearch: (String) -> Unit,
+    onTabChanged: (String?) -> Unit,
+    onLoadMore: () -> Unit
 ) {
-    val tabs = listOf("المعلمات", "أولياء الأمور")
-    val listState = rememberLazyListState()
-
-    // Infinite Scrolling Logic
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastVisibleIndex ->
-                if (lastVisibleIndex != null && lastVisibleIndex >= users.size - 2 && canLoadMore && !isLoadingMore && !isLoading) {
-                    onLoadMore()
-                }
-            }
+    val tabs = listOf("الكل", "المعلمات", "أولياء الأمور")
+    val roles = listOf(null, "teacher", "parent")
+    
+    // استخدام remember(initialRole) لتحديث الـ tab المختار عند فتح الشاشة بدور معين
+    var selectedTabIndex by remember(initialRole) { 
+        mutableStateOf(roles.indexOf(initialRole).coerceAtLeast(0)) 
     }
+    
+    var searchQuery by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
 
     Scaffold(
         containerColor = AppBg,
@@ -65,92 +93,83 @@ fun AdminUsersScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            // Premium Animated Tabs
-            Surface(
-                color = White,
-                shadowElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    tabs.forEachIndexed { i, title ->
-                        val selected = selectedTab == i
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { onTabChange(i) }
-                                .padding(vertical = 14.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                title,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) BluePrimary else Gray400,
-                                fontFamily = CairoFontFamily
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            AnimatedVisibility(
-                                visible = selected,
-                                enter = fadeIn() + expandVertically(),
-                                exit = fadeOut() + shrinkVertically()
+            
+            Surface(color = White, shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        tabs.forEachIndexed { i, title ->
+                            val selected = selectedTabIndex == i
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { 
+                                        selectedTabIndex = i
+                                        onTabChanged(roles[i])
+                                    }
+                                    .padding(vertical = 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Box(
-                                    Modifier.size(32.dp, 3.dp).clip(CircleShape)
-                                        .background(BluePrimary)
+                                Text(
+                                    title,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (selected) BluePrimary else Gray400,
+                                    fontFamily = CairoFontFamily
                                 )
+                                Spacer(Modifier.height(4.dp))
+                                AnimatedVisibility(visible = selected) {
+                                    Box(Modifier.size(24.dp, 3.dp).clip(CircleShape).background(BluePrimary))
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            // Search Bar Section with Cairo
-            Box(modifier = Modifier.fillMaxWidth().background(White).padding(16.dp)) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = onSearch,
-                    placeholder = {
-                        Text(
-                            "ابحث بالاسم أو البريد...",
-                            fontFamily = CairoFontFamily,
-                            color = Gray400
-                        )
-                    },
-                    leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = BluePrimary,
-                        unfocusedBorderColor = Gray200,
-                        focusedContainerColor = Gray50,
-                        unfocusedContainerColor = Gray50
-                    )
-                )
-            }
-
-            if (isLoading) {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(6) {
-                        ShimmerBox(
-                            Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(16.dp))
+                    Box(modifier = Modifier.padding(16.dp)) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { 
+                                searchQuery = it
+                                onSearch(it)
+                            },
+                            placeholder = { Text("ابحث بالاسم أو البريد...", fontFamily = CairoFontFamily, color = Gray400) },
+                            leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true,
+                            textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = BluePrimary,
+                                unfocusedBorderColor = Gray200,
+                                focusedContainerColor = Gray50,
+                                unfocusedContainerColor = Gray50
+                            )
                         )
                     }
                 }
-            } else if (users.isEmpty()) {
+            }
+
+            if (state.isLoading && state.users.isEmpty()) {
+                LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(6) { ShimmerBox(Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(16.dp))) }
+                }
+            } else if (state.error != null && state.users.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Default.CloudOff,
+                    title = "خطأ في الاتصال",
+                    subtitle = state.error,
+                    actionText = "إعادة المحاولة",
+                    onAction = onRefresh
+                )
+            } else if (state.users.isEmpty()) {
                 EmptyState(
                     icon = Icons.Default.PersonSearch,
-                    title = "لم يتم العثور على نتائج",
-                    subtitle = "تأكد من كتابة الاسم بشكل صحيح أو جرب كلمات بحث أخرى",
-                    actionText = "إضافة مستخدم جديد",
-                    onAction = onAdd
+                    title = "لا يوجد مستخدمين",
+                    subtitle = "لم نتمكن من العثور على أي مستخدمين بهذا التصنيف",
+                    actionText = "تحديث",
+                    onAction = onRefresh
                 )
             } else {
                 LazyColumn(
@@ -159,26 +178,20 @@ fun AdminUsersScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(users, key = { it.id }) { user ->
-                        UserRowItem(user = user, onClick = { onUserClick(user) })
+                    items(state.users, key = { it.id }) { user ->
+                        UserCardItem(
+                            user = user,
+                            onClick = { onUserClick(user) },
+                            onDelete = { onDelete(user) }
+                        )
                     }
-
-                    if (isLoadingMore) {
+                    if (state.isLoading) {
                         item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    color = BluePrimary,
-                                    strokeWidth = 2.dp,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = BluePrimary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
                             }
                         }
                     }
-
-                    item { Spacer(Modifier.height(80.dp)) } // FAB spacing
                 }
             }
         }
@@ -186,147 +199,40 @@ fun AdminUsersScreen(
 }
 
 @Composable
-private fun UserRowItem(user: User, onClick: () -> Unit) {
-    RawdatyCard(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        elevation = 2.dp
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+fun UserCardItem(user: User, onClick: () -> Unit, onDelete: () -> Unit) {
+    RawdatyCard(onClick = onClick, modifier = Modifier.fillMaxWidth(), containerColor = White) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(12.dp)) {
             Box {
                 RawdatyAvatar(
                     name = user.name,
-                    size = 56.dp,
-                    gradient = if (user.role == UserRole.TEACHER) RawdatyGradients.AvatarMint else RawdatyGradients.AvatarBlue
+                    size = 48.dp,
+                    gradient = when (user.role) {
+                        UserRole.TEACHER -> RawdatyGradients.AvatarMint
+                        UserRole.ADMIN, UserRole.SUPER_ADMIN -> RawdatyGradients.AvatarBlue
+                        else -> RawdatyGradients.AvatarBlue
+                    }
                 )
                 if (user.isActive) {
-                    Box(
-                        modifier = Modifier
-                            .size(14.dp)
-                            .clip(CircleShape)
-                            .background(ColorSuccess)
-                            .border(2.dp, White, CircleShape)
-                            .align(Alignment.BottomEnd)
-                    )
+                    Box(Modifier.size(10.dp).clip(CircleShape).background(ColorSuccess).border(1.dp, White, CircleShape).align(Alignment.BottomEnd))
                 }
             }
 
             Column(Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        user.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Gray900,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = CairoFontFamily,
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    RoleTag(
-                        role = if (user.role == UserRole.TEACHER) "معلمة" else "ولي أمر",
-                        useSmallText = true
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(user.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    RoleTag(role = when (user.role) {
+                        UserRole.TEACHER -> "معلمة"
+                        UserRole.ADMIN -> "مشرف"
+                        UserRole.SUPER_ADMIN -> "مدير"
+                        else -> "ولي أمر"
+                    }, useSmallText = true)
                 }
-                Text(
-                    user.email,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray500,
-                    fontFamily = CairoFontFamily
-                )
-                if (user.className != null) {
-                    Spacer(Modifier.height(4.dp))
-                    Surface(
-                        color = BlueLight.copy(0.4f),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.School,
-                                null,
-                                tint = BluePrimary,
-                                modifier = Modifier.size(10.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                user.className,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = BluePrimary,
-                                fontFamily = CairoFontFamily
-                            )
-                        }
-                    }
-                }
+                Text(user.email, style = MaterialTheme.typography.labelSmall, color = Gray500, fontFamily = CairoFontFamily, maxLines = 1)
             }
 
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                null,
-                tint = Gray300,
-                modifier = Modifier.size(20.dp)
-            )
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.DeleteOutline, null, tint = ColorError.copy(0.7f), modifier = Modifier.size(20.dp))
+            }
         }
-    }
-}
-
-@Preview
-@Composable
-fun AdminUsersPreview() {
-    RawdatyTheme {
-        val dummyUsers = listOf(
-            User(
-                1,
-                "سارة أحمد",
-                "sara@rawdaty.com",
-                "058844225",
-                UserRole.TEACHER,
-                "",
-                true,
-                classId = 1,
-                className = "فصل النجوم",
-                createdAt = "20 ابريل"
-            ),
-            User(
-                2, "محمد العلي", "mohammed@mail.com", "05544223", UserRole.PARENT, "", true,
-                classId = 2,
-                className = "فصل الفيوم",
-                createdAt = "15 مايو"
-            ),
-            User(
-                3,
-                "نورة خالد",
-                "noura@rawdaty.com",
-                "0501112223",
-                UserRole.TEACHER,
-                "",
-                true,
-                classId = 2,
-                className = "فصل الأمل",
-                createdAt = "15 مايو"
-            )
-        )
-        AdminUsersScreen(
-            users = dummyUsers,
-            query = "",
-            selectedTab = 0,
-            isLoading = false,
-            isLoadingMore = false,
-            canLoadMore = true,
-            onSearch = {},
-            onLoadMore = {},
-            onTabChange = {},
-            onUserClick = {},
-            onAdd = {},
-            onBack = {}
-        )
     }
 }

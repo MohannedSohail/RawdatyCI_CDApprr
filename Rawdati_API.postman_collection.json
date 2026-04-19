@@ -1,0 +1,4849 @@
+{
+  "info": {
+    "name": "Rawdati API v2.0 — Complete",
+    "description": "Complete Rawdati Multi-Tenant Kindergarten API\n\nSetup:\n1. Set BASE_URL = http://localhost:8000\n2. Set TENANT_SLUG = demo\n3. Run Login requests — tokens auto-saved to env vars",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "5baebb22-a9f2-458e-a99f-f762e06b2312"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "TENANT_SLUG",
+      "value": "demo"
+    },
+    {
+      "key": "ACCESS_TOKEN",
+      "value": ""
+    },
+    {
+      "key": "SUPER_TOKEN",
+      "value": ""
+    },
+    {
+      "key": "TENANT_ID",
+      "value": ""
+    },
+    {
+      "key": "USER_ID",
+      "value": ""
+    },
+    {
+      "key": "CLASS_ID",
+      "value": ""
+    },
+    {
+      "key": "CHILD_ID",
+      "value": ""
+    },
+    {
+      "key": "SESSION_ID",
+      "value": ""
+    },
+    {
+      "key": "CONV_ID",
+      "value": ""
+    },
+    {
+      "key": "NEWS_ID",
+      "value": ""
+    },
+    {
+      "key": "COMPLAINT_ID",
+      "value": ""
+    },
+    {
+      "key": "NOTIF_ID",
+      "value": ""
+    },
+    {
+      "key": "REFRESH_TOKEN",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "🔴 Super Admin API",
+      "item": [
+        {
+          "name": "🔐 Auth",
+          "item": [
+            {
+              "name": "Super Admin Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/auth/login",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"superadmin@rawdati.app\",\n  \"password\": \"SuperAdmin@123\",\n  \"totp_code\": \"000000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var r = pm.response.json();",
+                      "if(r.success && r.data && r.data.access_token) {",
+                      "  pm.collectionVariables.set('SUPER_TOKEN', r.data.access_token);",
+                      "  pm.collectionVariables.set('REFRESH_TOKEN', r.data.refresh_token || '');",
+                      "}}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ],
+          "id": "281efabd-5eb8-4dc4-898b-5e57fef1c4ae"
+        },
+        {
+          "name": "🏫 Tenant Management",
+          "item": [
+            {
+              "name": "List All Tenants",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "20",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Tenant",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"روضة الأمل\",\n  \"slug\": \"amal\",\n  \"plan\": \"pro\",\n  \"contact_email\": \"admin@amal.com\",\n  \"admin_name\": \"مدير روضة الأمل\",\n  \"billing_cycle\": \"monthly\",\n  \"primary_color\": \"#2E7D32\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var r = pm.response.json();",
+                      "if(r.success && r.data && r.data.id) {",
+                      "  pm.collectionVariables.set('TENANT_ID', r.data.id);",
+                      "}}",
+                      "if(r.success && r.data && r.data.tenant_id) {",
+                      "  pm.collectionVariables.set('TENANT_ID', r.data.tenant_id);",
+                      "}}",
+                      "if(r.success && r.data && r.data.session_id) {",
+                      "  pm.collectionVariables.set('TENANT_ID', r.data.session_id);",
+                      "}}",
+                      "if(r.success && r.data && r.data.conversation_id) {",
+                      "  pm.collectionVariables.set('TENANT_ID', r.data.conversation_id);",
+                      "}}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Tenant Details",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}"
+                  ]
+                },
+                "description": "",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Suspend Tenant",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}/status",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}",
+                    "status"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"suspended\",\n  \"reason\": \"عدم السداد\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Activate Tenant",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}/status",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}",
+                    "status"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"active\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change Plan to Pro",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}/plan",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}",
+                    "plan"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plan\": \"pro\",\n  \"billing_cycle\": \"monthly\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Branding",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}/branding",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}",
+                    "branding"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"primary_color\": \"#1565C0\",\n  \"app_name\": \"روضة الأمل\",\n  \"show_powered_by\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Tenant",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"confirmation\": \"DELETE:amal\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "2c1f7e1d-2d6a-4c21-a35a-88e3121693f2"
+        },
+        {
+          "name": "💳 Billing",
+          "item": [
+            {
+              "name": "Get Tenant Invoices",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}/invoices",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}",
+                    "invoices"
+                  ]
+                },
+                "description": "",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Extend Subscription 30 Days",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/tenants/{{TENANT_ID}}/extend",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "tenants",
+                    "{{TENANT_ID}}",
+                    "extend"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"days\": 30,\n  \"reason\": \"هدية ترحيبية\",\n  \"amount\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "d805cac3-6e78-4707-9903-3640c1551716"
+        },
+        {
+          "name": "📊 Analytics",
+          "item": [
+            {
+              "name": "Dashboard Analytics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/analytics/dashboard",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "analytics",
+                    "dashboard"
+                  ]
+                },
+                "description": "",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "83027d3f-ffd9-4569-8880-f095aa1f61f4"
+        },
+        {
+          "name": "📢 Broadcast",
+          "item": [
+            {
+              "name": "Send Broadcast to All",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/broadcast",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "broadcast"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"تحديث مهم\",\n  \"body\": \"نود إعلامكم بتحديث المنصة\",\n  \"target_tenants\": [],\n  \"target_roles\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Send to Specific Tenant",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/broadcast",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "broadcast"
+                  ]
+                },
+                "description": "",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"رسالة مخصصة\",\n  \"body\": \"رسالة لروضة النور فقط\",\n  \"target_tenants\": [\n    \"{{TENANT_ID}}\"\n  ],\n  \"target_roles\": [\n    \"admin\",\n    \"teacher\"\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "ded16ab1-3c44-4838-a47a-dc899ba3023a"
+        },
+        {
+          "name": "📋 Audit Log",
+          "item": [
+            {
+              "name": "Get Audit Log",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/audit-log",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "audit-log"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Log by Tenant",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Tenant-Slug",
+                    "value": "{{TENANT_SLUG}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/api/super/audit-log",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "api",
+                    "super",
+                    "audit-log"
+                  ],
+                  "query": [
+                    {
+                      "key": "tenant_id",
+                      "value": "{{TENANT_ID}}",
+                      "disabled": false
+                    },
+                    {
+                      "key": "action",
+                      "value": "change_plan",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{SUPER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "93862704-4606-4862-bbf5-6795e521e375"
+        }
+      ],
+      "id": "d0412270-55b4-4ea9-b586-0219708a6da7"
+    },
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Get Branding (Public)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/branding",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "branding"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@demo.rawdati.app\",\n  \"password\": \"Admin@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.access_token) {",
+                  "  pm.collectionVariables.set('ACCESS_TOKEN', r.data.access_token);",
+                  "  pm.collectionVariables.set('REFRESH_TOKEN', r.data.refresh_token || '');",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login as Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teacher@demo.rawdati.app\",\n  \"password\": \"Teacher@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.access_token) {",
+                  "  pm.collectionVariables.set('ACCESS_TOKEN', r.data.access_token);",
+                  "  pm.collectionVariables.set('REFRESH_TOKEN', r.data.refresh_token || '');",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login as Parent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"parent@demo.rawdati.app\",\n  \"password\": \"Parent@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.access_token) {",
+                  "  pm.collectionVariables.set('ACCESS_TOKEN', r.data.access_token);",
+                  "  pm.collectionVariables.set('REFRESH_TOKEN', r.data.refresh_token || '');",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/refresh",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{REFRESH_TOKEN}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/forgot-password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@demo.rawdati.app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@demo.rawdati.app\",\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/reset-password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reset_token\": \"TOKEN_FROM_VERIFY_OTP\",\n  \"password\": \"NewPass@123\",\n  \"password_confirmation\": \"NewPass@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{REFRESH_TOKEN}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "06cab2b3-c697-40fb-a81d-928bd2e952d6"
+    },
+    {
+      "name": "👤 Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "per_page",
+                  "value": "15",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Teachers Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "teacher",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Parents Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "parent",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "أحمد",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/{{USER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{USER_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"نورة محمد\",\n  \"email\": \"noura@demo.com\",\n  \"password\": \"Teacher@123\",\n  \"role\": \"teacher\",\n  \"phone\": \"0509876543\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Parent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"خالد سعد\",\n  \"email\": \"khalid@demo.com\",\n  \"password\": \"Parent@123\",\n  \"role\": \"parent\",\n  \"phone\": \"0551112233\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('USER_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/{{USER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{USER_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"نورة محمد علي\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/{{USER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{USER_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/{{USER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{USER_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "e681c1ab-d8eb-426c-bc8c-66863594bee3"
+    },
+    {
+      "name": "👤 Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/profile/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/profile/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"سارة أحمد محمد\",\n  \"phone\": \"0501111222\",\n  \"address\": \"الرياض، حي النرجس\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/profile/password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile",
+                "password"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"Admin@123\",\n  \"password\": \"NewAdmin@123\",\n  \"password_confirmation\": \"NewAdmin@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update FCM Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/users/profile/fcm-token",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "profile",
+                "fcm-token"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcm_token\": \"fcm_token_from_firebase_sdk\",\n  \"device_type\": \"android\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "ec120ec3-83dd-43fe-a2e1-17413d9d9005"
+    },
+    {
+      "name": "🏫 Classes",
+      "item": [
+        {
+          "name": "List All Classes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/classes",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "classes"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Classes with Children",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/classes",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "classes"
+              ],
+              "query": [
+                {
+                  "key": "include_children",
+                  "value": "true",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Class Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/classes/{{CLASS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "classes",
+                "{{CLASS_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Class",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/classes",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "classes"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"فصل الورود\",\n  \"description\": \"فصل الأطفال من 3-4 سنوات\",\n  \"teacher_id\": \"{{USER_ID}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('CLASS_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('CLASS_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('CLASS_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('CLASS_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Class (No Teacher)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/classes",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "classes"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"فصل النجوم\",\n  \"description\": \"فصل الأطفال من 4-5 سنوات\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Class",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/classes/{{CLASS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "classes",
+                "{{CLASS_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"فصل الورود المتقدم\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Class",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/classes/{{CLASS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "classes",
+                "{{CLASS_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "be9331ce-90a2-4512-bdaa-c36951771f75"
+    },
+    {
+      "name": "👶 Children",
+      "item": [
+        {
+          "name": "Add Child",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/children",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "children"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"أحمد محمد علي\",\n  \"parent_id\": \"{{USER_ID}}\",\n  \"class_id\": \"{{CLASS_ID}}\",\n  \"birth_date\": \"2020-05-15\",\n  \"gender\": \"male\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('CHILD_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('CHILD_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('CHILD_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('CHILD_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Child (Female, No Class)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/children",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "children"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ريم خالد\",\n  \"parent_id\": \"{{USER_ID}}\",\n  \"birth_date\": \"2021-03-10\",\n  \"gender\": \"female\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Child",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/children/{{CHILD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "children",
+                "{{CHILD_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": \"{{CLASS_ID}}\",\n  \"notes\": \"تحساسية من الفول السوداني\",\n  \"rating\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Move Child to Different Class",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/children/{{CHILD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "children",
+                "{{CHILD_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": \"NEW_CLASS_UUID_HERE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "528a8278-e8bb-4b32-8a77-9be023285278"
+    },
+    {
+      "name": "✅ Attendance",
+      "item": [
+        {
+          "name": "Record Daily Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/attendance",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attendance"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": \"{{CLASS_ID}}\",\n  \"date\": \"2025-03-17\",\n  \"records\": [\n    {\n      \"child_id\": \"{{CHILD_ID}}\",\n      \"status\": \"present\"\n    },\n    {\n      \"child_id\": \"ANOTHER_CHILD_UUID\",\n      \"status\": \"absent\",\n      \"notes\": \"مريض\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('SESSION_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('SESSION_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('SESSION_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('SESSION_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Single Attendance Record",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/attendance/{{SESSION_ID}}/records/{{CHILD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attendance",
+                "{{SESSION_ID}}",
+                "records",
+                "{{CHILD_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"absent\",\n  \"notes\": \"غياب بعذر\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Class Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/attendance/class/{{CLASS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attendance",
+                "class",
+                "{{CLASS_ID}}"
+              ],
+              "query": [
+                {
+                  "key": "from_date",
+                  "value": "2025-03-01",
+                  "disabled": false
+                },
+                {
+                  "key": "to_date",
+                  "value": "2025-03-17",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/attendance/child/{{CHILD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attendance",
+                "child",
+                "{{CHILD_ID}}"
+              ],
+              "query": [
+                {
+                  "key": "from_date",
+                  "value": "2025-03-01",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Monthly Attendance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/attendance/report/monthly",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attendance",
+                "report",
+                "monthly"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "2025-03",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Monthly Report (Specific Class)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/attendance/report/monthly",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "attendance",
+                "report",
+                "monthly"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "2025-03",
+                  "disabled": false
+                },
+                {
+                  "key": "class_id",
+                  "value": "{{CLASS_ID}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "0291d9e4-4f27-4423-89c4-6d8c987c4028"
+    },
+    {
+      "name": "💬 Chat",
+      "item": [
+        {
+          "name": "List My Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/chat/conversations",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chat",
+                "conversations"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start New Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/chat/conversations",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chat",
+                "conversations"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participant_id\": \"{{USER_ID}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('CONV_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('CONV_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('CONV_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('CONV_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Conversation Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/chat/conversations/{{CONV_ID}}/messages",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chat",
+                "conversations",
+                "{{CONV_ID}}",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "per_page",
+                  "value": "30",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/chat/conversations/{{CONV_ID}}/messages",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "chat",
+                "conversations",
+                "{{CONV_ID}}",
+                "messages"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"صباح الخير، كيف حال أحمد اليوم؟\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "dc7133f3-6ead-4ab3-b8d4-4e674054fab9"
+    },
+    {
+      "name": "📰 News & Announcements",
+      "item": [
+        {
+          "name": "List All News",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Announcements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "announcement",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Slider Images",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news/slider",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "slider"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get News Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news/{{NEWS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "{{NEWS_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create News Article",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"news\",\n  \"title\": \"رحلة إلى حديقة الحيوان\",\n  \"content\": \"تقرر تنظيم رحلة ترفيهية للأطفال الأسبوع القادم\",\n  \"is_visible\": true,\n  \"notify_users\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('NEWS_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('NEWS_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('NEWS_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('NEWS_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Announcement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"announcement\",\n  \"title\": \"إجازة رسمية\",\n  \"content\": \"يوم الثلاثاء إجازة رسمية بمناسبة اليوم الوطني\",\n  \"is_visible\": true,\n  \"notify_users\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Slider Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"slider\",\n  \"title\": \"صورة ترحيبية\",\n  \"content\": \"صورة للشاشة الرئيسية\",\n  \"image_url\": \"https://example.com/banner.jpg\",\n  \"is_visible\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update News",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news/{{NEWS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "{{NEWS_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"رحلة إلى حديقة الحيوان — التفاصيل الكاملة\",\n  \"is_visible\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hide News",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news/{{NEWS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "{{NEWS_ID}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_visible\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete News",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/news/{{NEWS_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "news",
+                "{{NEWS_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "a6633e24-bc06-4656-9072-55eba223fe61"
+    },
+    {
+      "name": "📮 Complaints & Suggestions",
+      "item": [
+        {
+          "name": "List All Complaints (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/complaints",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "complaints"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": false
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Suggestions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/complaints",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "complaints"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "suggestion",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Complaint Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/complaints/{{COMPLAINT_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "complaints",
+                "{{COMPLAINT_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Complaint (Parent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/complaints",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "complaints"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"complaint\",\n  \"content\": \"طفلي يشكو من سلوك أحد أقرانه داخل الفصل\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var r = pm.response.json();",
+                  "if(r.success && r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('COMPLAINT_ID', r.data.id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.tenant_id) {",
+                  "  pm.collectionVariables.set('COMPLAINT_ID', r.data.tenant_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.session_id) {",
+                  "  pm.collectionVariables.set('COMPLAINT_ID', r.data.session_id);",
+                  "}}",
+                  "if(r.success && r.data && r.data.conversation_id) {",
+                  "  pm.collectionVariables.set('COMPLAINT_ID', r.data.conversation_id);",
+                  "}}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit Suggestion (Parent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/complaints",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "complaints"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"suggestion\",\n  \"content\": \"أقترح إضافة حصة رياضة يومية للأطفال\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reply to Complaint (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/complaints/{{COMPLAINT_ID}}/reply",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "complaints",
+                "{{COMPLAINT_ID}}",
+                "reply"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reply\": \"شكراً لتواصلك، تم التحقق من الأمر واتخاذ الإجراء اللازم\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "6349d2d1-75c3-4d3a-a1bc-8e68877be19a"
+    },
+    {
+      "name": "🔔 Notifications",
+      "item": [
+        {
+          "name": "List My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Unread Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "is_read",
+                  "value": "false",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications/{{NOTIF_ID}}/read",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{NOTIF_ID}}",
+                "read"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications/read-all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send to All Users (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications/send",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "send"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"تذكير مهم\",\n  \"body\": \"الغد يوم تسليم ملفات الاشتراك\",\n  \"target\": \"all\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send to Teachers Only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications/send",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "send"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"اجتماع المعلمات\",\n  \"body\": \"اجتماع غداً الساعة 4 مساءً\",\n  \"target\": \"teachers\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send to Parents Only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications/send",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "send"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"إشعار لأولياء الأمور\",\n  \"body\": \"تذكير بسداد الرسوم الشهرية\",\n  \"target\": \"parents\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update FCM Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/notifications/fcm-token",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "fcm-token"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcm_token\": \"firebase_device_token_here\",\n  \"device_type\": \"ios\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "4acf0629-e72f-45a0-94e6-edd87bc8a92c"
+    },
+    {
+      "name": "🎮 Educational Games",
+      "item": [
+        {
+          "name": "Get Number Questions (Parent)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/questions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "game_type",
+                  "value": "numbers",
+                  "disabled": false
+                },
+                {
+                  "key": "child_id",
+                  "value": "{{CHILD_ID}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Letter Questions (Parent)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/questions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "game_type",
+                  "value": "letters",
+                  "disabled": false
+                },
+                {
+                  "key": "child_id",
+                  "value": "{{CHILD_ID}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Color Questions (Parent)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/questions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "game_type",
+                  "value": "colors",
+                  "disabled": false
+                },
+                {
+                  "key": "child_id",
+                  "value": "{{CHILD_ID}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save Game Result (Parent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/results",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "results"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"child_id\": \"{{CHILD_ID}}\",\n  \"game_type\": \"numbers\",\n  \"score\": 8,\n  \"answers\": [\n    {\n      \"question_id\": \"UUID1\",\n      \"selected_answer\": \"a\"\n    },\n    {\n      \"question_id\": \"UUID2\",\n      \"selected_answer\": \"b\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Game History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/results/{{CHILD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "results",
+                "{{CHILD_ID}}"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Numbers History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/results/{{CHILD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "results",
+                "{{CHILD_ID}}"
+              ],
+              "query": [
+                {
+                  "key": "game_type",
+                  "value": "numbers",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "View Question Bank (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/questions/bank",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "questions",
+                "bank"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Question (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/games/questions/QUESTION_UUID",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "games",
+                "questions",
+                "QUESTION_UUID"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correct_answer\": \"b\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "a8a8940b-fb21-4760-a2c8-39e93f981f62"
+    },
+    {
+      "name": "⚙️ Settings & Quota",
+      "item": [
+        {
+          "name": "Get Kindergarten Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/settings",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "settings"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/settings",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "settings"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kindergarten_name\": \"روضة النور للأطفال\",\n  \"kindergarten_address\": \"الرياض، حي العليا، شارع العروبة\",\n  \"kindergarten_phone\": \"0114441234\",\n  \"social_whatsapp\": \"0501234567\",\n  \"social_twitter\": \"@rawdaalnoor\",\n  \"social_instagram\": \"rawda.alnoor\",\n  \"map_lat\": 24.7136,\n  \"map_lng\": 46.6753,\n  \"academic_year\": \"2024-2025\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Quota & Usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Slug",
+                "value": "{{TENANT_SLUG}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/settings/quota",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "settings",
+                "quota"
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ACCESS_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "2ecbfcdd-5f30-4d05-ad54-57131b81a8f4"
+    }
+  ]
+}

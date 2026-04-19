@@ -2,261 +2,172 @@ package org.mohanned.rawdatyci_cdapp.presentation.screens.shared
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.domain.model.User
 import org.mohanned.rawdatyci_cdapp.domain.model.UserRole
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
+import org.mohanned.rawdatyci_cdapp.presentation.screens.auth.LoginScreen
+import org.mohanned.rawdatyci_cdapp.presentation.screens.auth.ResetPasswordScreen
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ProfileEffect
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ProfileIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ProfileViewModel
+
+object ProfileScreen : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: ProfileViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            viewModel.onIntent(ProfileIntent.Load)
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    ProfileEffect.NavigateToLogin -> navigator.replaceAll(LoginScreen())
+                    is ProfileEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                }
+            }
+        }
+
+        ProfileScreenContent(
+            user = state.user,
+            name = state.name,
+            phone = state.phone,
+            isLoading = state.isLoading,
+            isSaving = state.isSaving,
+            onNameChange = { viewModel.onIntent(ProfileIntent.NameChanged(it)) },
+            onPhoneChange = { viewModel.onIntent(ProfileIntent.PhoneChanged(it)) },
+            onSave = { viewModel.onIntent(ProfileIntent.Save) },
+            onChangePassword = { current, new, confirm ->
+                // Typically a dialog or separate intent, here we'll assume a direct call for simplicity
+            },
+            onLogout = { viewModel.onIntent(ProfileIntent.Logout) },
+            onAvatarClick = { viewModel.onIntent(ProfileIntent.Save) },
+            onChangePasswordClick = { navigator.push(ResetPasswordScreen("logged_in")) },
+            onBack = { navigator.pop() },
+            snackbarHostState = snackbarHostState
+        )
+    }
+}
 
 @Composable
-fun ProfileScreen(
+fun ProfileScreenContent(
     user: User?,
     name: String,
     phone: String,
     isLoading: Boolean,
     isSaving: Boolean,
-    onBack: () -> Unit,
-    onSettingsClick: () -> Unit,
     onNameChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
     onSave: () -> Unit,
+    onChangePassword: (String, String, String) -> Unit,
     onLogout: () -> Unit,
+    onAvatarClick: () -> Unit,
+    onChangePasswordClick: () -> Unit,
+    onBack: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     Scaffold(
         containerColor = AppBg,
-        topBar = { 
-            Surface(
-                color = White,
-                shadowElevation = 4.dp
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp, 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BlueDark)
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "الملف الشخصي",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = BlueDark,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = CairoFontFamily
-                    )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, null, tint = BlueDark)
-                    }
-                }
-            }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            GlassHeader(
+                title = "الملف الشخصي",
+                onBack = onBack,
+                gradient = RawdatyGradients.Primary,
+                headerHeight = 140.dp
+            )
         }
     ) { padding ->
         if (isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LoadingScreen() }
-            return@Scaffold
-        }
-
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(32.dp)
-        ) {
-            // Hero Avatar Section with Premium Styling
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = BluePrimary)
+            }
+        } else if (user != null) {
             Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Box {
-                    Surface(
-                        modifier = Modifier.size(126.dp),
-                        shape = CircleShape,
-                        color = White,
-                        shadowElevation = 8.dp
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    RawdatyAvatar(user.name, size = 100.dp, gradient = RawdatyGradients.AvatarBlue)
+                    IconButton(
+                        onClick = onAvatarClick,
+                        modifier = Modifier.size(32.dp).background(BluePrimary, CircleShape).border(2.dp, White, CircleShape)
                     ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(4.dp)) {
-                            RawdatyAvatar(
-                                name = name,
-                                size = 118.dp,
-                                gradient = when (user?.role) {
-                                    UserRole.ADMIN -> RawdatyGradients.HeroBlue
-                                    UserRole.TEACHER -> RawdatyGradients.HeroMint
-                                    else -> RawdatyGradients.AvatarAmber
-                                }
-                            )
-                        }
-                    }
-                    
-                    Surface(
-                        onClick = { /* Camera Action */ },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(40.dp)
-                            .offset(x = 4.dp, y = 4.dp),
-                        shape = CircleShape,
-                        color = White,
-                        shadowElevation = 4.dp
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.CameraAlt, null, tint = BluePrimary, modifier = Modifier.size(20.dp))
-                        }
+                        Icon(Icons.Default.CameraAlt, null, tint = White, modifier = Modifier.size(16.dp))
                     }
                 }
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        name.ifEmpty { "مستخدم روضتي" },
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Black,
-                        color = Gray900,
-                        fontFamily = CairoFontFamily
-                    )
-                    user?.let { role ->
-                        RoleTag(
-                            when(role.role) {
-                                UserRole.ADMIN -> "المدير العام"
-                                UserRole.TEACHER -> "معلمة الفصل"
-                                else -> "ولي أمر"
-                            },
-                            useSmallText = false
-                        )
+                Text(user.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily)
+                RoleTag(role = when(user.role) {
+                    UserRole.ADMIN, UserRole.SUPER_ADMIN -> "مدير النظام"
+                    UserRole.TEACHER -> "معلمة"
+                    UserRole.PARENT -> "ولي أمر"
+                })
+
+                RawdatyCard(containerColor = White) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text("المعلومات الشخصية", fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily)
+                        RawdatyField(value = name, onValueChange = onNameChange, label = "الاسم الكامل", leadingIcon = Icons.Default.Person)
+                        RawdatyField(value = phone, onValueChange = onPhoneChange, label = "رقم الهاتف", leadingIcon = Icons.Default.Phone)
+                        RawdatyField(value = user.email, onValueChange = {}, label = "البريد الإلكتروني", leadingIcon = Icons.Default.Email, enabled = false)
                     }
                 }
-            }
 
-            // Information Card: Personal Data
-            RawdatyCard(elevation = 2.dp) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.PersonOutline, null, tint = BluePrimary, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "البيانات الشخصية",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = BluePrimary,
-                            fontFamily = CairoFontFamily
-                        )
-                    }
-                    
-                    RawdatyField(
-                        value = name,
-                        onValueChange = onNameChange,
-                        label = "الاسم الكامل (بالعربي)",
-                        leadingIcon = Icons.Default.Badge
-                    )
-
-                    RawdatyField(
-                        value = user?.email ?: "",
-                        onValueChange = {},
-                        label = "البريد الإلكتروني",
-                        leadingIcon = Icons.Default.AlternateEmail,
-                        enabled = false
-                    )
-
-                    RawdatyField(
-                        value = phone,
-                        onValueChange = onPhoneChange,
-                        label = "رقم جوال التواصل",
-                        leadingIcon = Icons.Default.PhoneIphone
-                    )
-                }
-            }
-
-            // Information Card: Security & Additional
-            RawdatyCard(elevation = 2.dp) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
-                        Icon(Icons.Default.Security, null, tint = BluePrimary, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "الأمان واللغة",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = BluePrimary,
-                            fontFamily = CairoFontFamily
-                        )
-                    }
-                    
-                    SettingsRow(
-                        title = "تغيير كلمة المرور",
-                        icon = Icons.Default.VpnKey,
-                        onClick = { /* Change Pass */ },
-                        subtitle = "تأمين حسابك بكلمة سر قوية",
-                        iconColor = Gray700
-                    )
-                    RawdatyDivider()
-                    SettingsRow(
-                        title = "لغة واجهة التطبيق",
-                        icon = Icons.Default.Language,
-                        onClick = { /* Language */ },
-                        subtitle = "اللغة الحالية: العربية",
-                        iconColor = Gray700
-                    )
-                }
-            }
-
-            // Final Actions
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
                 RawdatyButton(
-                    text = "حفظ كافة التعديلات",
+                    text = "حفظ التعديلات",
                     onClick = onSave,
                     isLoading = isSaving,
-                    icon = Icons.Default.CheckCircle,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                TextButton(
-                    onClick = onLogout,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.textButtonColors(contentColor = ColorError),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, null, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        "تسجيل الخروج من الحساب", 
-                        style = MaterialTheme.typography.titleSmall, 
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = CairoFontFamily
-                    )
+                RawdatyCard(containerColor = White) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { onChangePasswordClick() }.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(Icons.Default.LockReset, null, tint = AmberPrimary)
+                        Text("تغيير كلمة المرور", modifier = Modifier.weight(1f), fontFamily = CairoFontFamily)
+                        Icon(Icons.Default.ChevronLeft, null, tint = Gray300)
+                    }
                 }
+
+                RawdatyButton(
+                    text = "تسجيل الخروج",
+                    onClick = onLogout,
+                    backgroundColor = ColorError.copy(0.1f),
+                    textColor = ColorError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Spacer(Modifier.height(20.dp))
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun ProfilePreview() {
-    RawdatyTheme {
-        ProfileScreen(
-            user = null,
-            name = "مهند سهيل",
-            phone = "0501234567",
-            isLoading = false,
-            isSaving = false,
-            onBack = {},
-            onSettingsClick = {},
-            onNameChange = {},
-            onPhoneChange = {},
-            onSave = {},
-            onLogout = {}
-        )
     }
 }

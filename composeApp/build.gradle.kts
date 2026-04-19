@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -34,14 +33,10 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
-
             implementation(libs.ktor.android)
-            implementation(libs.sqldelight.android)
             implementation(libs.koin.android)
             implementation(libs.coroutines.android)
-
             implementation(libs.datastore.prefs)
-
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -77,10 +72,6 @@ kotlin {
             implementation(libs.ktor.logging)
             implementation(libs.ktor.auth)
 
-            // SQLDelight
-            implementation(libs.sqldelight.runtime)
-            implementation(libs.sqldelight.coroutines)
-
             // DataStore
             implementation(libs.datastore.prefs)
 
@@ -97,7 +88,6 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.ktor.darwin)
-            implementation(libs.sqldelight.native)
         }
 
         commonTest.dependencies {
@@ -105,17 +95,14 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.kotlinx.coroutinesSwing)
-
             implementation(compose.desktop.currentOs)
             implementation(libs.ktor.java)
-            implementation(libs.sqldelight.jvm)
         }
         val desktopMain by getting {
             dependencies {
                 implementation(libs.kotlinx.coroutinesSwing)
                 implementation(compose.desktop.currentOs)
                 implementation(libs.ktor.java)
-                implementation(libs.sqldelight.jvm)
             }
         }
 
@@ -156,16 +143,6 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
-}
-
-
-sqldelight {
-    databases {
-        create("RawdatyDatabase") {
-            packageName.set("com.rawdaty.db")
-            generateAsync.set(false)
-        }
-    }
 }
 
 compose.desktop {

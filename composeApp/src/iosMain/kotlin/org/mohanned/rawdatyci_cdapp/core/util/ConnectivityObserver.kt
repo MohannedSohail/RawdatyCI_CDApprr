@@ -15,15 +15,15 @@ import platform.Network.nw_path_status_unsatisfied
 import platform.darwin.dispatch_get_main_queue
 
 actual class ConnectivityObserver {
-    actual fun observe(): Flow<ConnectivityObserver.Status> {
+    actual fun observe(): Flow<Status> {
         return callbackFlow {
             val monitor = nw_path_monitor_create()
             nw_path_monitor_set_update_handler(monitor) { path ->
                 val status = nw_path_get_status(path)
                 val connectivityStatus = if (status == nw_path_status_satisfied) {
-                    ConnectivityObserver.Status.Available
+                    Status.Available
                 } else {
-                    ConnectivityObserver.Status.Unavailable
+                    Status.Unavailable
                 }
                 launch { send(connectivityStatus) }
             }
@@ -34,5 +34,9 @@ actual class ConnectivityObserver {
                 nw_path_monitor_cancel(monitor)
             }
         }
+    }
+
+    actual enum class Status {
+        Available, Unavailable, Losing, Lost
     }
 }

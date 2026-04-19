@@ -1,135 +1,84 @@
 package org.mohanned.rawdatyci_cdapp.presentation.viewmodel
 
-import org.mohanned.rawdatyci_cdapp.core.base.BaseViewModel
-import org.mohanned.rawdatyci_cdapp.core.base.UiEffect
-import org.mohanned.rawdatyci_cdapp.core.base.UiIntent
-import org.mohanned.rawdatyci_cdapp.core.base.UiState
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.domain.repository.AuthRepository
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import org.mohanned.rawdatyci_cdapp.domain.usecase.auth.ForgotPasswordUseCase
+import org.mohanned.rawdatyci_cdapp.domain.usecase.auth.ResetPasswordUseCase
 
-
-// ── Forgot Password ───────────────────────────────────
 data class ForgotPasswordState(
     val email: String = "",
-    val isLoading: Boolean = false,
     val emailError: String? = null,
-) : UiState
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val isResetSuccess: Boolean = false,
+    val newPassword: String = "",
+    val confirmPassword: String = "",
+)
 
-sealed class ForgotPasswordIntent : UiIntent {
-    data class EmailChanged(val email: String) : ForgotPasswordIntent()
-    object Submit                              : ForgotPasswordIntent()
+sealed class ForgotPasswordEffect {
+    data class NavigateToOtp(val email: String) : ForgotPasswordEffect()
+    data class ShowError(val message: String) : ForgotPasswordEffect()
+    data class ShowSuccess(val message: String) : ForgotPasswordEffect()
 }
 
-sealed class ForgotPasswordEffect : UiEffect {
-    data class NavigateToOtp(val email: String) : ForgotPasswordEffect()
-    data class ShowError(val message: String)   : ForgotPasswordEffect()
+sealed class ForgotPasswordIntent {
+    data class EmailChanged(val v: String) : ForgotPasswordIntent()
+    object Submit : ForgotPasswordIntent()
+    data class NewPasswordChanged(val v: String) : ForgotPasswordIntent()
+    data class ConfirmPasswordChanged(val v: String) : ForgotPasswordIntent()
+    data class ResetPassword(val token: String) : ForgotPasswordIntent()
 }
 
 class ForgotPasswordViewModel(
-    private val authRepository: AuthRepository,
-) : BaseViewModel<ForgotPasswordState, ForgotPasswordIntent, ForgotPasswordEffect>(
-    ForgotPasswordState()
-) {
-    override suspend fun handleIntent(intent: ForgotPasswordIntent) {
-        when (intent) {
-            is ForgotPasswordIntent.EmailChanged -> {
-                updateState { copy(email = intent.email, emailError = null) }
+    private val forgotPasswordUseCase: ForgotPasswordUseCase,
+    private val resetPasswordUseCase: ResetPasswordUseCase
+) : ViewModel() {
+    private val _state = MutableStateFlow(ForgotPasswordState())
+    val state = _state.asStateFlow()
+    private val _effect = Channel<ForgotPasswordEffect>()
+    val effect = _effect.receiveAsFlow()
+
+    fun onIntent(i: ForgotPasswordIntent) = when (i) {
+        is ForgotPasswordIntent.EmailChanged -> _state.update { it.copy(email = i.v, emailError = null, error = null) }
+        is ForgotPasswordIntent.NewPasswordChanged -> _state.update { it.copy(newPassword = i.v, error = null) }
+        is ForgotPasswordIntent.ConfirmPasswordChanged -> _state.update { it.copy(confirmPassword = i.v, error = null) }
+
+        is ForgotPasswordIntent.Submit -> viewModelScope.launch {
+            if (_state.value.email.isBlank()) {
+                _state.update { it.copy(emailError = "البريد مطلوب") }; return@launch
             }
-            is ForgotPasswordIntent.Submit -> submit()
-        }
-    }
-
-    private suspend fun submit() {
-        if (state.value.email.isBlank() || !state.value.email.contains("@")) {
-            updateState { copy(emailError = "أدخل بريداً إلكترونياً صحيحاً") }
-            return
-        }
-
-        updateState { copy(isLoading = true) }
-
-        when (val r = authRepository.forgotPassword(state.value.email.trim())) {
-            is ApiResponse.Success -> {
-                updateState { copy(isLoading = false) }
-                emitEffect(ForgotPasswordEffect.NavigateToOtp(state.value.email))
+            _state.update { it.copy(isLoading = true, error = null) }
+            forgotPasswordUseCase(_state.value.email.trim()).onSuccess {
+                _effect.send(ForgotPasswordEffect.NavigateToOtp(_state.value.email))
+            }.onFailure {
+                _state.update { it.copy(error = it.error) }
             }
-            is ApiResponse.Error -> {
-                updateState { copy(isLoading = false) }
-                emitEffect(ForgotPasswordEffect.ShowError(r.message))
-            }
-            is ApiResponse.NetworkError -> {
-                updateState { copy(isLoading = false) }
-                emitEffect(ForgotPasswordEffect.ShowError(r.message))
-            }
-        }
-    }
-}
-
-// ── OTP ───────────────────────────────────────────────
-data class OtpState(
-    val email: String = "",
-    val otp: String = "",
-    val isLoading: Boolean = false,
-    val countdown: Int = 60,
-    val canResend: Boolean = false,
-    val error: String? = null,
-) : UiState
-
-sealed class OtpIntent : UiIntent {
-    data class OtpChanged(val otp: String) : OtpIntent()
-    object Submit                          : OtpIntent()
-    object Resend                          : OtpIntent()
-    object Tick                            : OtpIntent()
-}
-
-sealed class OtpEffect : UiEffect {
-    object NavigateToReset              : OtpEffect()
-    data class ShowError(val msg: String) : OtpEffect()
-}
-
-class OtpViewModel(
-    private val authRepository: AuthRepository,
-    private val email: String,
-) : BaseViewModel<OtpState, OtpIntent, OtpEffect>(OtpState(email = email)) {
-
-    override suspend fun handleIntent(intent: OtpIntent) {
-        when (intent) {
-            is OtpIntent.OtpChanged -> {
-                updateState { copy(otp = intent.otp, error = null) }
-            }
-            is OtpIntent.Tick -> {
-                if (state.value.countdown > 0) {
-                    updateState { copy(countdown = countdown - 1) }
-                } else {
-                    updateState { copy(canResend = true) }
-                }
-            }
-            is OtpIntent.Resend -> {
-                updateState { copy(countdown = 60, canResend = false) }
-                authRepository.forgotPassword(email)
-            }
-            is OtpIntent.Submit -> submit()
-        }
-    }
-
-    private suspend fun submit() {
-        if (state.value.otp.length < 4) {
-            updateState { copy(error = "أدخل الرمز كاملاً") }
-            return
+            _state.update { it.copy(isLoading = false) }
         }
 
-        updateState { copy(isLoading = true) }
+        is ForgotPasswordIntent.ResetPassword -> viewModelScope.launch {
+            val s = _state.value
+            if (s.newPassword.length < 6) {
+                _state.update { it.copy(error = "كلمة المرور قصيرة جداً") }; return@launch
+            }
+            if (s.newPassword != s.confirmPassword) {
+                _state.update { it.copy(error = "كلمتا المرور غير متطابقتين") }; return@launch
+            }
 
-        when (val r = authRepository.verifyOtp(email, state.value.otp)) {
-            is ApiResponse.Success -> {
-                updateState { copy(isLoading = false) }
-                emitEffect(OtpEffect.NavigateToReset)
+            _state.update { it.copy(isLoading = true, error = null) }
+            resetPasswordUseCase(i.token, s.newPassword, s.confirmPassword).onSuccess {
+                _state.update { it.copy(isResetSuccess = true) }
+                _effect.send(ForgotPasswordEffect.ShowSuccess("تم تغيير كلمة المرور بنجاح"))
+            }.onFailure {
+                _state.update { it.copy(error = it.error) }
             }
-            is ApiResponse.Error -> {
-                updateState { copy(isLoading = false, error = r.message) }
-            }
-            is ApiResponse.NetworkError -> {
-                updateState { copy(isLoading = false, error = r.message) }
-            }
+            _state.update { it.copy(isLoading = false) }
         }
     }
 }

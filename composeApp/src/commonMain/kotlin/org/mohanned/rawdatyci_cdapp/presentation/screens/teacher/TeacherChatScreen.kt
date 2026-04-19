@@ -1,26 +1,63 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.teacher
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.mohanned.rawdatyci_cdapp.presentation.components.*
-import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyAvatar
+import org.mohanned.rawdatyci_cdapp.presentation.theme.AppBg
+import org.mohanned.rawdatyci_cdapp.presentation.theme.BlueDark
+import org.mohanned.rawdatyci_cdapp.presentation.theme.BluePrimary
+import org.mohanned.rawdatyci_cdapp.presentation.theme.CairoFontFamily
+import org.mohanned.rawdatyci_cdapp.presentation.theme.ColorSuccess
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray200
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray400
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray50
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray800
+import org.mohanned.rawdatyci_cdapp.presentation.theme.RawdatyGradients
+import org.mohanned.rawdatyci_cdapp.presentation.theme.RawdatyTheme
+import org.mohanned.rawdatyci_cdapp.presentation.theme.White
 
 data class Message(
     val id: String,
@@ -55,19 +92,23 @@ fun TeacherChatScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BlueDark)
                     }
                     Spacer(Modifier.width(8.dp))
-                    RawdatyAvatar(name = parentName, size = 44.dp, gradient = RawdatyGradients.AvatarBlue)
+                    RawdatyAvatar(
+                        name = parentName,
+                        size = 44.dp,
+                        gradient = RawdatyGradients.AvatarBlue
+                    )
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
-                            parentName, 
-                            style = MaterialTheme.typography.titleMedium, 
-                            color = BlueDark, 
+                            parentName,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = BlueDark,
                             fontWeight = FontWeight.Bold,
                             fontFamily = CairoFontFamily
                         )
                         Text(
-                            "متصل الآن", 
-                            style = MaterialTheme.typography.labelSmall, 
+                            "متصل الآن",
+                            style = MaterialTheme.typography.labelSmall,
                             color = ColorSuccess,
                             fontFamily = CairoFontFamily
                         )
@@ -93,7 +134,11 @@ fun TeacherChatScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    IconButton(onClick = { /* Attach */ }, modifier = Modifier.size(40.dp).background(Gray50, RoundedCornerShape(12.dp))) {
+                    IconButton(
+                        onClick = { /* Attach */ },
+                        modifier = Modifier.size(40.dp)
+                            .background(Gray50, RoundedCornerShape(12.dp))
+                    ) {
                         Icon(Icons.Outlined.AddCircleOutline, null, tint = BluePrimary)
                     }
 
@@ -101,7 +146,13 @@ fun TeacherChatScreen(
                         value = messageText,
                         onValueChange = { messageText = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("اكتب رسالتك هنا...", fontFamily = CairoFontFamily, color = Gray400) },
+                        placeholder = {
+                            Text(
+                                "اكتب رسالتك هنا...",
+                                fontFamily = CairoFontFamily,
+                                color = Gray400
+                            )
+                        },
                         shape = RoundedCornerShape(24.dp),
                         textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -124,7 +175,12 @@ fun TeacherChatScreen(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Send, null, tint = White, modifier = Modifier.size(22.dp))
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            null,
+                            tint = White,
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
                 }
             }

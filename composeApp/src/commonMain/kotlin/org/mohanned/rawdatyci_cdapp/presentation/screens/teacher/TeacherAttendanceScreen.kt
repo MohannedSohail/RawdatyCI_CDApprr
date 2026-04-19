@@ -1,290 +1,171 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.teacher
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceStatus
 import org.mohanned.rawdatyci_cdapp.domain.model.Child
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.AttendanceEffect
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.AttendanceIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.AttendanceViewModel
 
-@Composable
-fun TeacherAttendanceScreen(
-    children: List<Child>,
-    attendance: Map<Int, AttendanceStatus>,
-    classroomName: String,
-    date: String,
-    isSaving: Boolean,
-    isOffline: Boolean,
-    onToggle: (Int) -> Unit,
-    onSelectAll: () -> Unit,
-    onSave: () -> Unit,
-    onBack: () -> Unit,
-) {
-    val presentCount = attendance.values.count { it == AttendanceStatus.PRESENT }
+data class TeacherAttendanceScreen(val classId: String, val className: String) : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: AttendanceViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+        val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(
-        containerColor = AppBg,
-        topBar = { 
-            GlassHeader(
-                title = "تحضير الطلاب",
-                subtitle = "$classroomName — $date",
-                onBack = onBack,
-                gradient = RawdatyGradients.HeroBlue, // Blue feels professional for admin tasks
-                headerHeight = 140.dp
-            ) 
-        },
-        bottomBar = {
-            AttendanceBottomSummary(
-                presentCount = presentCount,
-                totalCount = children.size,
-                isSaving = isSaving,
-                onSave = onSave
-            )
-        }
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (isOffline) OfflineIndicator()
-
-            // Control Header
-            Surface(
-                color = White,
-                shadowElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            "قائمة الحضور",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Gray900,
-                            fontFamily = CairoFontFamily
-                        )
-                        Text(
-                            "تم رصد $presentCount من أصل ${children.size}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = BluePrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = CairoFontFamily
-                        )
-                    }
-
-                    RawdatyButton(
-                        text = "تحديد الكل",
-                        onClick = onSelectAll,
-                        icon = Icons.Default.LibraryAddCheck,
-                        backgroundColor = BluePrimary.copy(0.1f),
-                        modifier = Modifier.height(36.dp),
-                        useSmallText = true
-                    )
-                }
-            }
-
-            // Students Grid with better spacing and premium feel
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(children, key = { it.id }) { child ->
-                    val isPresent = attendance[child.id] == AttendanceStatus.PRESENT
-                    StudentAttendanceItem(
-                        child = child,
-                        isPresent = isPresent,
-                        onToggle = { onToggle(child.id) }
-                    )
+        LaunchedEffect(classId) {
+            viewModel.onIntent(AttendanceIntent.LoadChildren(classId))
+            viewModel.effect.collect { effect ->
+                if (effect is AttendanceEffect.ShowMessage) {
+                    snackbarHostState.showSnackbar(effect.message)
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun StudentAttendanceItem(child: Child, isPresent: Boolean, onToggle: () -> Unit) {
-    val borderColor = if (isPresent) MintPrimary else Gray200
-    val bgColor = if (isPresent) MintLight.copy(0.3f) else White
-
-    Column(
-        modifier = Modifier
-            .aspectRatio(0.85f)
-            .clip(RoundedCornerShape(20.dp))
-            .background(bgColor)
-            .clickable(onClick = onToggle)
-            .border(if (isPresent) 2.dp else 1.dp, borderColor, RoundedCornerShape(20.dp))
-            .padding(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        // Modern Avatar
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(if (isPresent) White else Gray100),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                child.fullName.take(1),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Black,
-                color = if (isPresent) MintPrimary else Gray400,
-                fontFamily = CairoFontFamily
-            )
-        }
-
-        Text(
-            child.fullName,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (isPresent) Gray900 else Gray600,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            fontFamily = CairoFontFamily,
-            fontWeight = if (isPresent) FontWeight.Bold else FontWeight.Medium
-        )
-
-        // Status Indicator with Animation
-        AnimatedContent(
-            targetState = isPresent,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "attendance_status"
-        ) { present ->
-            Icon(
-                if (present) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                null,
-                tint = if (present) MintPrimary else Gray300,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun AttendanceBottomSummary(
-    presentCount: Int,
-    totalCount: Int,
-    isSaving: Boolean,
-    onSave: () -> Unit
-) {
-    Surface(
-        color = White,
-        shadowElevation = 12.dp,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp).navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Present Stats Card
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    color = MintLight.copy(0.3f),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text("$presentCount", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MintPrimary, fontFamily = CairoFontFamily)
-                        Spacer(Modifier.width(8.dp))
-                        Text("حاضرون", style = MaterialTheme.typography.labelSmall, color = MintPrimary.copy(0.8f), fontFamily = CairoFontFamily)
-                    }
-                }
-
-                // Absent Stats Card
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    color = ColorError.copy(0.05f),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text("${totalCount - presentCount}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = ColorError, fontFamily = CairoFontFamily)
-                        Spacer(Modifier.width(8.dp))
-                        Text("غائبون", style = MaterialTheme.typography.labelSmall, color = ColorError.copy(0.8f), fontFamily = CairoFontFamily)
-                    }
-                }
-            }
-
-            // Interactive Progress Bar
-            val progress = if (totalCount > 0) presentCount.toFloat() / totalCount else 0f
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("اكتمال الحضور", style = MaterialTheme.typography.labelSmall, color = Gray500, fontFamily = CairoFontFamily)
-                    Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black, color = BluePrimary, fontFamily = CairoFontFamily)
-                }
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(10.dp).clip(CircleShape),
-                    color = BluePrimary,
-                    trackColor = Gray100
+        Scaffold(
+            containerColor = AppBg,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                GlassHeader(
+                    title = "تحضير الطلاب - $className",
+                    onBack = { navigator.pop() },
+                    gradient = RawdatyGradients.Primary,
+                    headerHeight = 120.dp
                 )
+            },
+            bottomBar = {
+                Surface(color = White, shadowElevation = 8.dp) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { viewModel.onIntent(AttendanceIntent.SelectAll) },
+                            modifier = Modifier.weight(1f).height(52.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, BluePrimary)
+                        ) {
+                            Text("حضور الكل", fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = BluePrimary)
+                        }
+                        RawdatyButton(
+                            text = "حفظ الكشف",
+                            onClick = { viewModel.onIntent(AttendanceIntent.Save(classId)) },
+                            modifier = Modifier.weight(1f).height(52.dp),
+                            isLoading = state.isSaving
+                        )
+                    }
+                }
             }
-
-            RawdatyButton(
-                text = "إرسال التقرير النهائي",
-                onClick = onSave,
-                isLoading = isSaving,
-                icon = Icons.Default.Send,
-                backgroundColor = BluePrimary,
-                modifier = Modifier.fillMaxWidth()
-            )
+        ) { padding ->
+            if (state.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = BluePrimary)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.padding(padding).fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(state.children, key = { it.id }) { child ->
+                        AttendanceChildCard(
+                            child = child,
+                            status = state.attendanceMap[child.id] ?: AttendanceStatus.PRESENT,
+                            onStatusChange = { status ->
+                                viewModel.onIntent(AttendanceIntent.UpdateStatus(child.id, status))
+                            }
+                        )
+                    }
+                    item { Spacer(Modifier.height(20.dp)) }
+                }
+            }
         }
     }
 }
 
 @Composable
-@Preview
-fun TeacherAttendancePreview() {
-    RawdatyTheme {
-        val dummyChildren = listOf(
-            Child(1, "أحمد محمد العلي", "2019-05-10", "male", null, 1, "فصل النجوم", 1, "محمد العلي", "0501234567", "2024-09-01", 4, null),
-            Child(2, "ليان سارة العلي", "2019-08-15", "female", null, 1, "فصل النجوم", 1, "سارة العلي", "0501234567", "2024-09-01", 5, null),
-            Child(3, "فهد بن سلمان", "2019-01-20", "male", null, 1, "فصل النجوم", 2, "سلمان", "0501234568", "2024-09-01", 3, null),
-            Child(4, "نورة علي", "2019-03-12", "female", null, 1, "فصل النجوم", 3, "علي", "0501234569", "2024-09-01", 5, null)
-        )
-        TeacherAttendanceScreen(
-            children = dummyChildren,
-            attendance = mapOf(1 to AttendanceStatus.PRESENT, 2 to AttendanceStatus.PRESENT, 3 to AttendanceStatus.ABSENT),
-            classroomName = "فصل النجوم",
-            date = "الأحد، 24 مارس 2024",
-            isSaving = false,
-            isOffline = false,
-            onToggle = {},
-            onSelectAll = {},
-            onSave = {},
-            onBack = {}
+private fun AttendanceChildCard(
+    child: Child,
+    status: AttendanceStatus,
+    onStatusChange: (AttendanceStatus) -> Unit
+) {
+    RawdatyCard(containerColor = White, elevation = 2.dp) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            RawdatyAvatar(child.fullName, size = 48.dp, gradient = RawdatyGradients.AvatarAmber)
+            Text(
+                child.fullName,
+                modifier = Modifier.weight(1f),
+                fontWeight = FontWeight.Bold,
+                fontFamily = CairoFontFamily,
+                fontSize = 14.sp
+            )
+            
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                AttendanceStatusButton(AttendanceStatus.PRESENT, "ح", status == AttendanceStatus.PRESENT, onStatusChange)
+                AttendanceStatusButton(AttendanceStatus.ABSENT, "غ", status == AttendanceStatus.ABSENT, onStatusChange)
+                AttendanceStatusButton(AttendanceStatus.LATE, "ت", status == AttendanceStatus.LATE, onStatusChange)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttendanceStatusButton(
+    targetStatus: AttendanceStatus,
+    label: String,
+    isSelected: Boolean,
+    onClick: (AttendanceStatus) -> Unit
+) {
+    val color = when (targetStatus) {
+        AttendanceStatus.PRESENT -> ColorSuccess
+        AttendanceStatus.ABSENT -> ColorError
+        AttendanceStatus.LATE -> AmberPrimary
+        else -> Gray400
+    }
+
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(if (isSelected) color else color.copy(0.1f))
+            .border(1.dp, color.copy(0.2f), CircleShape)
+            .clickable { onClick(targetStatus) },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            label,
+            color = if (isSelected) White else color,
+            fontWeight = FontWeight.Black,
+            fontSize = 12.sp,
+            fontFamily = CairoFontFamily
         )
     }
 }

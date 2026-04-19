@@ -6,50 +6,78 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.domain.model.News
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NewsEffect
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NewsIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NewsState
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NewsViewModel
+
+object AdminNewsScreen : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: NewsViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            viewModel.onIntent(NewsIntent.Load)
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is NewsEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                }
+            }
+        }
+
+        AdminNewsScreenContent(
+            state = state,
+            snackbarHostState = snackbarHostState,
+            onIntent = viewModel::onIntent,
+            onAdd = { navigator.push(AdminAddNewsScreen(null)) },
+            onEdit = { news -> navigator.push(AdminAddNewsScreen(news.id)) },
+            onBack = { navigator.pop() }
+        )
+    }
+}
 
 @Composable
-fun AdminNewsScreen(
-    news: List<News>,
-    query: String,
-    isLoading: Boolean,
-    isLoadingMore: Boolean,
-    canLoadMore: Boolean,
-    onSearch: (String) -> Unit,
-    onLoadMore: () -> Unit,
+fun AdminNewsScreenContent(
+    state: NewsState,
+    snackbarHostState: SnackbarHostState,
+    onIntent: (NewsIntent) -> Unit,
     onAdd: () -> Unit,
     onEdit: (News) -> Unit,
-    onDelete: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
     val listState = rememberLazyListState()
 
-    // Load more trigger
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastVisibleIndex ->
-                if (lastVisibleIndex != null && lastVisibleIndex >= news.size - 2 && canLoadMore && !isLoadingMore && !isLoading) {
-                    onLoadMore()
-                }
-            }
+    if (state.showDeleteDialog) {
+        DeleteConfirmDialog(
+            title = "تأكيد حذف الخبر",
+            message = "هل أنت متأكد من رغبتك في حذف هذا الخبر؟ لا يمكن التراجع عن هذا الإجراء.",
+            onConfirm = { onIntent(NewsIntent.ConfirmDelete) },
+            onDismiss = { onIntent(NewsIntent.DismissDelete) }
+        )
     }
 
     Scaffold(
         containerColor = AppBg,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             GlassHeader(
                 title = "إدارة الأخبار والإعلانات",
@@ -59,11 +87,10 @@ fun AdminNewsScreen(
             )
         },
         floatingActionButton = {
-            RawdatyFAB(onClick = onAdd, icon = Icons.Default.Add)
+            RawdatyFAB(onClick = onAdd, icon = Icons.Default.PostAdd)
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            // Premium Search Bar with Cairo
             Surface(
                 color = White,
                 shadowElevation = 2.dp,
@@ -71,15 +98,9 @@ fun AdminNewsScreen(
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
                     OutlinedTextField(
-                        value = query,
-                        onValueChange = onSearch,
-                        placeholder = {
-                            Text(
-                                "بحث في الأخبار أو الإعلانات...",
-                                fontFamily = CairoFontFamily,
-                                color = Gray400
-                            )
-                        },
+                        value = "", 
+                        onValueChange = { onIntent(NewsIntent.Search(it)) },
+                        placeholder = { Text("بحث في الأخبار...", fontFamily = CairoFontFamily, color = Gray400) },
                         leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -95,50 +116,32 @@ fun AdminNewsScreen(
                 }
             }
 
-            if (isLoading) {
-                LazyColumn(
-                    contentPadding = PaddingValues(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(6) { NotificationItemShimmer() }
+            if (state.isLoading && state.news.isEmpty()) {
+                LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    items(6) { ShimmerBox(Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(16.dp))) }
                 }
-            } else if (news.isEmpty()) {
+            } else if (state.news.isEmpty()) {
                 EmptyState(
                     icon = Icons.Outlined.Newspaper,
-                    title = "لا توجد أخبار منشورة",
-                    subtitle = "ابدأ بإضافة أول خبر أو إعلان لمشاركته مع الجميع.",
-                    actionText = "إضافة خبر جديد",
-                    onAction = onAdd
+                    title = if (state.error != null) "خطأ في التحميل" else "لا توجد أخبار حالياً",
+                    subtitle = state.error ?: "ابدأ بإضافة أول خبر أو إعلان لمشاركته مع الجميع.",
+                    actionText = if (state.error != null) "إعادة المحاولة" else "إضافة خبر جديد",
+                    onAction = { if (state.error != null) onIntent(NewsIntent.Load) else onAdd() }
                 )
             } else {
                 LazyColumn(
                     state = listState,
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    items(news, key = { it.id }) { item ->
+                    items(state.news, key = { it.id }) { newsItem ->
                         AdminNewsItem(
-                            news = item,
-                            onEdit = { onEdit(item) },
-                            onDelete = { onDelete(item.id) }
+                            news = newsItem,
+                            onEdit = { onEdit(newsItem) },
+                            onDelete = { onIntent(NewsIntent.DeleteRequest(newsItem.id)) }
                         )
                     }
-
-                    if (isLoadingMore) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    color = BluePrimary,
-                                    strokeWidth = 2.dp,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                    }
-
                     item { Spacer(Modifier.height(80.dp)) }
                 }
             }
@@ -147,169 +150,24 @@ fun AdminNewsScreen(
 }
 
 @Composable
-private fun AdminNewsItem(
-    news: News,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
-    RawdatyCard(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = 2.dp
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Priority/Status Icon
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(if (news.isPinned) AmberLight.copy(0.4f) else BlueLight.copy(0.4f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    if (news.isPinned) Icons.Default.PushPin else Icons.Default.Article,
-                    null,
-                    tint = if (news.isPinned) AmberPrimary else BluePrimary,
-                    modifier = Modifier.size(28.dp)
-                )
+private fun AdminNewsItem(news: News, onEdit: () -> Unit, onDelete: () -> Unit) {
+    RawdatyCard(modifier = Modifier.fillMaxWidth(), elevation = 2.dp, containerColor = White) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(12.dp)) {
+            Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(if (news.isVisible) AmberLight.copy(0.4f) else BlueLight.copy(0.4f)), contentAlignment = Alignment.Center) {
+                Icon(if (news.isVisible) Icons.Default.PushPin else Icons.Default.Article, null, tint = if (news.isVisible) AmberPrimary else BluePrimary, modifier = Modifier.size(24.dp))
             }
-
-            // News Content
             Column(Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        news.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray900,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                        fontFamily = CairoFontFamily
-                    )
-                    if (news.isPinned) {
-                        RoleTag("مثبت", useSmallText = true)
-                    }
-                }
-                Text(
-                    news.body,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray600,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    fontFamily = CairoFontFamily
-                )
-                Spacer(Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.AccessTime,
-                            null,
-                            tint = Gray400,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            news.createdAt,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Gray400,
-                            fontFamily = CairoFontFamily
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Person,
-                            null,
-                            tint = Gray400,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            news.authorName,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Gray400,
-                            fontFamily = CairoFontFamily
-                        )
-                    }
-                }
+                Text(news.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Gray900, maxLines = 1, overflow = TextOverflow.Ellipsis, fontFamily = CairoFontFamily)
+                Text(news.body, style = MaterialTheme.typography.labelSmall, color = Gray600, maxLines = 2, overflow = TextOverflow.Ellipsis, fontFamily = CairoFontFamily)
             }
-
-            // Small Actions in a vertical stack
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(
-                    onClick = onEdit,
-                    modifier = Modifier.size(36.dp).background(Gray50, CircleShape)
-                ) {
-                    Icon(
-                        Icons.Default.Edit,
-                        null,
-                        tint = BluePrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                IconButton(onClick = onEdit, modifier = Modifier.size(32.dp).background(Gray50, CircleShape)) {
+                    Icon(Icons.Default.Edit, null, tint = BluePrimary, modifier = Modifier.size(16.dp))
                 }
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(36.dp).background(Gray50, CircleShape)
-                ) {
-                    Icon(
-                        Icons.Default.DeleteOutline,
-                        null,
-                        tint = ColorError.copy(0.8f),
-                        modifier = Modifier.size(18.dp)
-                    )
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp).background(Gray50, CircleShape)) {
+                    Icon(Icons.Default.DeleteOutline, null, tint = ColorError.copy(0.8f), modifier = Modifier.size(16.dp))
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun AdminNewsPreview() {
-    RawdatyTheme {
-        AdminNewsScreen(
-            news = listOf(
-                News(
-                    1,
-                    "فتح باب التسجيل",
-                    "يسرنا إبلاغكم ببدء فترة التسجيل المبكر للفصل القادم.",
-                    "الإدارة",
-                    true,
-                    "Hossam",
-                    "24 مارس"
-                ),
-                News(
-                    2,
-                    "صيانة دورية",
-                    "سيتم إجراء صيانة دورية للمرافق غداً.",
-                    "الخدمات",
-                    true,
-                    "AlHossam",
-                    "30 مارس"
-                )
-            ),
-            query = "",
-            isLoading = false,
-            isLoadingMore = false,
-            canLoadMore = true,
-            onSearch = {},
-            onLoadMore = {},
-            onAdd = {},
-            onEdit = {},
-            onDelete = {},
-            onBack = {}
-        )
     }
 }

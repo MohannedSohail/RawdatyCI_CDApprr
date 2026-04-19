@@ -1,177 +1,158 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.auth
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.AlternateEmail
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LockReset
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ForgotPasswordEffect
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ForgotPasswordIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ForgotPasswordState
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ForgotPasswordViewModel
+
+object ForgotPasswordScreen : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: ForgotPasswordViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is ForgotPasswordEffect.NavigateToOtp -> {
+                        navigator.push(OtpScreen(effect.email))
+                    }
+                    is ForgotPasswordEffect.ShowError -> snackbarHostState.showSnackbar(effect.message)
+                    is ForgotPasswordEffect.ShowSuccess -> snackbarHostState.showSnackbar(effect.message)
+                }
+            }
+        }
+
+        ForgotPasswordUI(
+            state = state,
+            snackbarHostState = snackbarHostState,
+            onIntent = viewModel::onIntent,
+            onBack = { navigator.pop() }
+        )
+    }
+}
 
 @Composable
-fun ForgotPasswordScreen(
-    email: String,
-    emailError: String?,
-    isLoading: Boolean,
-    onEmailChange: (String) -> Unit,
-    onSubmit: () -> Unit,
+fun ForgotPasswordUI(
+    state: ForgotPasswordState,
+    snackbarHostState: SnackbarHostState,
+    onIntent: (ForgotPasswordIntent) -> Unit,
     onBack: () -> Unit,
 ) {
     Scaffold(
-        containerColor = White
+        containerColor = AppBg,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Premium Gradient Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.38f)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color(0xFF0F2A3E), Color(0xFF1E4C6F))
-                        )
-                    )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            WaveHeader(
+                title = "استعادة الحساب",
+                subtitle = "أدخل بريدك الإلكتروني ليصلك رمز التفعيل",
+                onBack = onBack,
+                gradient = RawdatyGradients.HeroBlue,
+                headerHeight = 240.dp
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                        .statusBarsPadding(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Surface(
+                    modifier = Modifier.size(64.dp),
+                    shape = CircleShape,
+                    color = White.copy(0.15f),
+                    border = BorderStroke(1.dp, White.copy(0.2f))
                 ) {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        IconButton(
-                            onClick = onBack,
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .clip(CircleShape)
-                                .background(White.copy(0.15f))
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = White)
-                        }
-                    }
-                    
-                    Spacer(Modifier.height(32.dp))
-                    
-                    Surface(
-                        modifier = Modifier.size(72.dp),
-                        shape = CircleShape,
-                        color = White.copy(0.1f),
-                        border = BorderStroke(1.dp, White.copy(0.2f))
-                    ) {
-                        Icon(Icons.Outlined.LockReset, null, tint = White, modifier = Modifier.padding(16.dp))
-                    }
-                    
-                    Spacer(Modifier.height(20.dp))
-                    
-                    Text(
-                        "استعادة الحساب",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = White,
-                        fontWeight = FontWeight.Black,
-                        fontFamily = CairoFontFamily
-                    )
-                    Text(
-                        "أدخل بريدك الإلكتروني ليصلك رمز استرداد الحساب",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = White.copy(0.7f),
-                        fontFamily = CairoFontFamily,
-                        textAlign = TextAlign.Center
+                    Icon(
+                        Icons.Outlined.LockReset,
+                        null,
+                        tint = White,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
 
-            // Interactive Form Container
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Spacer(Modifier.fillMaxHeight(0.32f))
-                
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = White,
-                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                    shadowElevation = 8.dp
+            AnimateEntrance(delay = 300) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .offset(y = (-30).dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 40.dp),
-                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        RawdatyField(
-                            value = email,
-                            onValueChange = onEmailChange,
-                            label = "البريد الإلكتروني المسجل",
-                            placeholder = "example@mail.com",
-                            leadingIcon = Icons.Outlined.AlternateEmail,
-                            isError = emailError != null,
-                            errorMessage = emailError
-                        )
-
-                        RawdatyButton(
-                            text = "إرسال رمز التحقق",
-                            onClick = onSubmit,
-                            isLoading = isLoading,
-                            backgroundColor = BluePrimary,
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        )
-
-                        // Help/Info Card (Refined)
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = BlueLight.copy(0.15f),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, BluePrimary.copy(0.1f))
+                    RawdatyCard(elevation = 8.dp, containerColor = White) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.Top,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            RawdatyField(
+                                value = state.email,
+                                onValueChange = { onIntent(ForgotPasswordIntent.EmailChanged(it)) },
+                                label = "البريد الإلكتروني المسجل",
+                                placeholder = "example@mail.com",
+                                leadingIcon = Icons.Outlined.AlternateEmail
+                            )
+
+                            RawdatyButton(
+                                text = "إرسال رمز التحقق",
+                                onClick = { onIntent(ForgotPasswordIntent.Submit) },
+                                isLoading = state.isLoading,
+                                backgroundColor = BluePrimary,
+                                modifier = Modifier.fillMaxWidth().height(56.dp)
+                            )
+
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = BlueLight.copy(0.15f),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, BluePrimary.copy(0.1f))
                             ) {
-                                Icon(Icons.Outlined.Info, null, tint = BluePrimary, modifier = Modifier.size(20.dp))
-                                Text(
-                                    "تأكد من كتابة البريد الإلكتروني بشكل صحيح. يرجى مراجعة صندوق الوارد (أو الرسائل غير المرغوب فيها) للوصول إلى الرمز.",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = BlueDark,
-                                    fontFamily = CairoFontFamily,
-                                    modifier = Modifier.weight(1f),
-                                    lineHeight = 18.sp
-                                )
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.Top,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Info,
+                                        null,
+                                        tint = BluePrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        "تأكد من كتابة البريد الإلكتروني بشكل صحيح. يرجى مراجعة صندوق الوارد (أو الرسائل غير المرغوب فيها) للوصول إلى الرمز.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = BlueDark,
+                                        fontFamily = CairoFontFamily,
+                                        modifier = Modifier.weight(1f),
+                                        lineHeight =18.sp
+                                    )
+                                }
                             }
                         }
-                        
-                        Spacer(Modifier.height(40.dp))
                     }
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun ForgotPasswordPreview() {
-    RawdatyTheme {
-        ForgotPasswordScreen(
-            email = "",
-            emailError = null,
-            isLoading = false,
-            onEmailChange = {},
-            onSubmit = {},
-            onBack = {}
-        )
     }
 }

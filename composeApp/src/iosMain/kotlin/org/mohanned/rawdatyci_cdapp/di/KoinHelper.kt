@@ -3,19 +3,15 @@ package org.mohanned.rawdatyci_cdapp.di
 import org.koin.core.context.startKoin
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.mohanned.rawdatyci_cdapp.domain.repository.SyncManager
 
 fun initKoin() {
-    val koinApp = startKoin {
+    startKoin {
         modules(
-            commonModule(),
+            coreModule(),
             repositoryModule,
             viewModelModule,
             platformModule()
+            // Note: platformModule() on iOS should provide local data storage or other iOS specific bits
         )
     }
-    
-    // Start SyncManager
-    val syncManager: SyncManager = koinApp.koin.get()
-    syncManager.start()
 }

@@ -39,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.mohanned.rawdatyci_cdapp.domain.model.News
+import org.mohanned.rawdatyci_cdapp.domain.model.NewsType
 import org.mohanned.rawdatyci_cdapp.presentation.components.EmptyState
 import org.mohanned.rawdatyci_cdapp.presentation.components.GlassHeader
 import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyCard
@@ -97,7 +98,7 @@ fun TeacherNewsScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             // Pinned News Section
-            val pinned = news.filter { it.isPinned }
+            val pinned = news.filter { it.isVisible }
             if (pinned.isNotEmpty()) {
                 item {
                     SectionHeader("إعلانات هامة")
@@ -187,7 +188,7 @@ fun TeacherNewsScreen(
             }
 
             // News Feed Section
-            val regular = news.filter { !it.isPinned }
+            val regular = news.filter { !it.isVisible }
             if (regular.isNotEmpty()) {
                 item {
                     SectionHeader("آخر المستجدات")
@@ -283,31 +284,35 @@ fun TeacherNewsPreview() {
     RawdatyTheme {
         val dummyNews = listOf(
             News(
-                1,
+                "1",
                 "بدء التسجيل للرحلة السنوية",
                 "يسرنا إبلاغكم بفتح باب التسجيل للرحلة الميدانية السنوية إلى حديقة الحيوان لجميع الطلاب.",
                 "سارة أحمد",
                 false,
-                "Moahnned Sohail",
-                createdAt = "2024-03-24"
+                NewsType.NEWS,
+                createdAt = "2024-03-24",
+                authorName = "Moahnned Sohail"
             ),
             News(
-                2,
+                "2",
                 "تغيير في مواعيد الحصص",
                 "سيتم تأجيل حصة الرسم يوم غد لمدة ساعة واحدة نظراً لإقامة نشاط رياضي خارجي.",
                 "إدارة الروضة",
                 false,
-                "Moahnned Sohail",
-                createdAt = "2024-03-24"
+                NewsType.NEWS,
+                createdAt = "2024-03-24",
+                authorName = "Moahnned Sohail"
             ),
             News(
-                3,
+                "3",
                 "توزيع شهادات التميز",
                 "سيتم توزيع شهادات التميز على الطلاب المتفوقين في فصل النجوم يوم الخميس القادم.",
                 "أ. نورة علي",
                 false,
-                "Moahnned Sohail",
-                createdAt = "2024-03-24"
+                NewsType.NEWS,
+                createdAt = "2024-03-24",
+                authorName = "Moahnned Sohail"
+
             )
         )
         TeacherNewsScreen(

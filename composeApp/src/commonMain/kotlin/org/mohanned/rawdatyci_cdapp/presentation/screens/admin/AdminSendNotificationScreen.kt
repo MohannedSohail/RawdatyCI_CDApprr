@@ -1,32 +1,58 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.admin
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NotificationsIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.NotificationsViewModel
+
+object AdminSendNotificationScreen : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: NotificationsViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+
+        AdminSendNotificationScreenContent(
+            title = state.title,
+            body = state.body,
+            target = state.target,
+            isLoading = state.isActionLoading,
+            onTitleChange = { viewModel.onIntent(NotificationsIntent.TitleChanged(it)) },
+            onBodyChange = { viewModel.onIntent(NotificationsIntent.BodyChanged(it)) },
+            onTargetChange = { viewModel.onIntent(NotificationsIntent.TargetChanged(it)) },
+            onSend = { viewModel.onIntent(NotificationsIntent.Send) },
+            onBack = { navigator.pop() }
+        )
+    }
+}
 
 @Composable
-fun AdminSendNotificationScreen(
+fun AdminSendNotificationScreenContent(
     title: String,
     body: String,
     target: String,
     isLoading: Boolean,
-    titleError: String?,
-    bodyError: String?,
     onTitleChange: (String) -> Unit,
     onBodyChange: (String) -> Unit,
     onTargetChange: (String) -> Unit,
@@ -45,7 +71,8 @@ fun AdminSendNotificationScreen(
             GlassHeader(
                 title = "إرسال تنبيه عاجل",
                 onBack = onBack,
-                backgroundColor = BluePrimary
+                gradient = RawdatyGradients.AdminHeader,
+                headerHeight = 140.dp
             )
         }
     ) { padding ->
@@ -57,9 +84,8 @@ fun AdminSendNotificationScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Header Card
-            RawdatyCard(backgroundColor = AmberLight.copy(0.4f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            RawdatyCard(containerColor = AmberLight.copy(0.4f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
                     Box(
                         modifier = Modifier.size(52.dp).clip(CircleShape).background(White),
                         contentAlignment = Alignment.Center
@@ -67,15 +93,14 @@ fun AdminSendNotificationScreen(
                         Icon(Icons.Default.Campaign, null, tint = AmberPrimary, modifier = Modifier.size(28.dp))
                     }
                     Column(Modifier.weight(1f)) {
-                        Text("تواصل فوري وشامل", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, color = BluePrimary)
-                        Text("سيتم إرسال هذا التنبيه كإشعار دفع (Push) للفئة المستهدفة فوراً.", style = MaterialTheme.typography.bodySmall, color = Gray600)
+                        Text("تواصل فوري وشامل", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, color = BluePrimary, fontFamily = CairoFontFamily)
+                        Text("سيتم إرسال هذا التنبيه كإشعار دفع (Push) للفئة المستهدفة فوراً.", style = MaterialTheme.typography.bodySmall, color = Gray600, fontFamily = CairoFontFamily)
                     }
                 }
             }
 
-            // Target Selection Section
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("الفئة المستهدفة بالتنبيه", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Gray700)
+                Text("الفئة المستهدفة بالتنبيه", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Gray700, fontFamily = CairoFontFamily)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     targets.forEach { (value, label, icon) ->
                         val isSelected = target == value
@@ -95,7 +120,8 @@ fun AdminSendNotificationScreen(
                                     label,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) White else Gray500
+                                    color = if (isSelected) White else Gray500,
+                                    fontFamily = CairoFontFamily
                                 )
                             }
                         }
@@ -103,107 +129,43 @@ fun AdminSendNotificationScreen(
                 }
             }
 
-            // Input Fields
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 RawdatyField(
                     value = title,
                     onValueChange = onTitleChange,
                     label = "عنوان التنبيه",
                     placeholder = "مثال: إعلان هام بخصوص الرحلة",
-                    leadingIcon = Icons.Default.Title,
-                    isError = titleError != null,
-                    errorMessage = titleError
+                    leadingIcon = Icons.Default.Title
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("محتوى الإشعار", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Gray700)
+                    Text("محتوى الإشعار", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Gray700, fontFamily = CairoFontFamily)
                     OutlinedTextField(
                         value = body,
                         onValueChange = onBodyChange,
                         modifier = Modifier.fillMaxWidth().height(140.dp),
                         shape = RoundedCornerShape(16.dp),
-                        placeholder = { Text("اكتب تفاصيل التنبيه هنا باختصار ووضوح...", color = Gray400) },
-                        isError = bodyError != null,
+                        placeholder = { Text("اكتب تفاصيل التنبيه هنا باختصار ووضوح...", color = Gray400, fontFamily = CairoFontFamily) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BluePrimary,
                             unfocusedBorderColor = Gray200,
-                            errorBorderColor = ColorError,
-                            focusedContainerColor = White,
-                            unfocusedContainerColor = White
+                            focusedContainerColor = Gray50,
+                            unfocusedContainerColor = Gray50
                         )
                     )
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        if (bodyError != null) {
-                            Text(bodyError, style = MaterialTheme.typography.labelSmall, color = ColorError)
-                        } else {
-                            Spacer(Modifier.weight(1f))
-                        }
-                        Text("${body.length} / 250", style = MaterialTheme.typography.labelSmall, color = if (body.length > 250) ColorError else Gray300)
-                    }
-                }
-            }
-
-            // Preview Section (Simulated)
-            RawdatyCard(backgroundColor = Gray50) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("معاينة شكل الإشعار على الهاتف", style = MaterialTheme.typography.labelSmall, color = Gray400, fontWeight = FontWeight.Bold)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White.copy(0.7f)).padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(AmberPrimary), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.NotificationsActive, null, tint = White, modifier = Modifier.size(20.dp))
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text(title.ifEmpty { "عنوان التنبيه سيظهر هنا" }, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Black, color = Gray900, maxLines = 1)
-                            Text(body.ifEmpty { "محتوى التنبيه سيظهر هنا بشكل مختصر..." }, style = MaterialTheme.typography.labelSmall, color = Gray600, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
                 }
             }
 
             Spacer(Modifier.height(24.dp))
 
-            // Actions
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                RawdatyButton(
-                    text = "إرسال التنبيه الآن",
-                    onClick = onSend,
-                    isLoading = isLoading,
-                    icon = Icons.AutoMirrored.Filled.Send,
-                    backgroundColor = BluePrimary,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                TextButton(
-                    onClick = onBack,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("إلغاء والعودة للوحة التحكم", color = Gray400, style = MaterialTheme.typography.labelLarge)
-                }
-            }
+            RawdatyButton(
+                text = "إرسال التنبيه الآن",
+                onClick = onSend,
+                isLoading = isLoading,
+                icon = Icons.AutoMirrored.Filled.Send,
+                backgroundColor = BluePrimary,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
-    }
-}
-
-// ── Previews ──────────────────────────────────────────
-@Preview
-@Composable
-fun AdminSendNotificationPreview() {
-    RawdatyTheme {
-        AdminSendNotificationScreen(
-            title = "",
-            body = "",
-            target = "all",
-            isLoading = false,
-            titleError = null,
-            bodyError = null,
-            onTitleChange = {},
-            onBodyChange = {},
-            onTargetChange = {},
-            onSend = {},
-            onBack = {}
-        )
     }
 }

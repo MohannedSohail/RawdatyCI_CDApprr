@@ -1,72 +1,52 @@
 package org.mohanned.rawdatyci_cdapp.data.remote.api
+
 import io.ktor.client.HttpClient
 import io.ktor.client.request.*
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiConfig
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.core.network.remote.safeApiCall
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiListDto
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiMessageDto
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.NotificationDto
+import io.ktor.http.*
+import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
+import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
+import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 
-class NotificationsApiService(private val client: HttpClient) {
+interface NotificationsApiService {
+    suspend fun getNotifications(isRead: Boolean?, page: Int): ApiResponse<ApiListDto<NotificationDto>>
+    suspend fun markAsRead(id: String): ApiResponse<Unit>
+    suspend fun markAllAsRead(): ApiResponse<Unit>
+    suspend fun sendNotification(title: String, body: String, target: String, classId: String?): ApiResponse<Unit>
+    suspend fun updateFcmToken(token: String, deviceType: String): ApiResponse<Unit>
+}
 
-    // GET /api/v1/notifications
-    suspend fun getNotifications(
-        page: Int = 1,
-    ): ApiResponse<ApiListDto<NotificationDto>> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/notifications") {
-                parameter("page", page)
-            }
+class NotificationsApiServiceImpl(private val client: HttpClient) : NotificationsApiService {
+    override suspend fun getNotifications(isRead: Boolean?, page: Int): ApiResponse<ApiListDto<NotificationDto>> = safeApiCall {
+        client.get("notifications") {
+            parameter("is_read", isRead)
+            parameter("page", page)
         }
+    }
 
-    // PATCH /api/v1/notifications/:id/read
-    suspend fun markRead(
-        id: Int,
-    ): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.patch("${ApiConfig.BASE_URL}/notifications/$id/read")
-        }
+    override suspend fun markAsRead(id: String): ApiResponse<Unit> = safeApiCall {
+        client.patch("notifications/$id/read")
+    }
 
-    // POST /api/v1/notifications/read-all
-    suspend fun markAllRead(): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/notifications/read-all")
-        }
+    override suspend fun markAllAsRead(): ApiResponse<Unit> = safeApiCall {
+        client.post("notifications/read-all")
+    }
 
-    // POST /api/v1/notifications/send
-    suspend fun sendNotification(
-        title: String,
-        body: String,
-        target: String = "all",
-        classId: Int? = null,
-    ): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/notifications/send") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "title"    to title,
-                    "body"     to body,
-                    "target"   to target,
-                    "class_id" to classId,
-                ))
-            }
+    override suspend fun sendNotification(title: String, body: String, target: String, classId: String?): ApiResponse<Unit> = safeApiCall {
+        client.post("notifications/send") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf(
+                "title" to title,
+                "body" to body,
+                "target" to target,
+                "class_id" to classId
+            ))
         }
+    }
 
-    // POST /api/v1/notifications/fcm-token
-    suspend fun updateFcmToken(
-        token: String,
-        platform: String,
-    ): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/notifications/fcm-token") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "fcm_token" to token,
-                    "platform"  to platform,
-                ))
-            }
+    override suspend fun updateFcmToken(token: String, deviceType: String): ApiResponse<Unit> = safeApiCall {
+        client.post("notifications/fcm-token") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("token" to token, "device_type" to deviceType))
         }
+    }
 }

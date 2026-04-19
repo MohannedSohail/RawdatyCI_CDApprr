@@ -2,66 +2,47 @@ package org.mohanned.rawdatyci_cdapp.data.remote.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.*
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import kotlinx.serialization.Serializable
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiConfig
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.core.network.remote.safeApiCall
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiListDto
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.GameQuestionDto
+import io.ktor.http.*
+import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
+import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
+import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
 
-@Serializable
-data class SaveGameResultRequest(
-    val child_id: Int,
-    val game_type: String,
-    val score: Int,
-    val total_questions: Int,
-    val duration_seconds: Int,
-)
+interface GamesApiService {
+    suspend fun getQuestions(gameType: String): ApiResponse<List<GameQuestionDto>>
+    suspend fun saveResult(request: GameResultRequest): ApiResponse<Unit>
+    suspend fun getChildHistory(childId: String, gameType: String?): ApiResponse<List<GameResultRequest>> // Using GameResultRequest as a placeholder or DTO if defined
+    suspend fun getQuestionBank(): ApiResponse<List<GameQuestionDto>>
+    suspend fun updateQuestion(id: String, text: String?, options: List<String>?, correctAnswer: String?): ApiResponse<GameQuestionDto>
+}
 
-class GamesApiService(private val client: HttpClient) {
+class GamesApiServiceImpl(private val client: HttpClient) : GamesApiService {
+    override suspend fun getQuestions(gameType: String): ApiResponse<List<GameQuestionDto>> = safeApiCall {
+        client.get("games/questions") { parameter("game_type", gameType) }
+    }
 
-    // GET /api/v1/games/questions
-    suspend fun getQuestions(
-        gameType: String,
-        level: Int = 1,
-    ): ApiResponse<ApiListDto<GameQuestionDto>> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/games/questions") {
-                parameter("type", gameType)
-                parameter("level", level)
-            }
+    override suspend fun saveResult(request: GameResultRequest): ApiResponse<Unit> = safeApiCall {
+        client.post("games/results") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
         }
+    }
 
-    // POST /api/v1/games/results
-    suspend fun saveResult(
-        childId: Int,
-        gameType: String,
-        score: Int,
-        totalQuestions: Int,
-        durationSeconds: Int,
-    ): ApiResponse<ApiListDto<GameQuestionDto>> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/games/results") {
-                contentType(ContentType.Application.Json)
-                setBody(
-                    SaveGameResultRequest(
-                        child_id = childId,
-                        game_type = gameType,
-                        score = score,
-                        total_questions = totalQuestions,
-                        duration_seconds = durationSeconds,
-                    )
-                )
-            }
-        }
+    override suspend fun getChildHistory(childId: String, gameType: String?): ApiResponse<List<GameResultRequest>> = safeApiCall {
+        client.get("games/results/$childId") { parameter("game_type", gameType) }
+    }
 
-    // GET /api/v1/games/results/:child_id
-    suspend fun getChildResults(
-        childId: Int,
-    ): ApiResponse<ApiListDto<GameQuestionDto>> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/games/results/$childId")
+    override suspend fun getQuestionBank(): ApiResponse<List<GameQuestionDto>> = safeApiCall {
+        client.get("games/questions/bank")
+    }
+
+    override suspend fun updateQuestion(id: String, text: String?, options: List<String>?, correctAnswer: String?): ApiResponse<GameQuestionDto> = safeApiCall {
+        client.patch("games/questions/$id") {
+            contentType(ContentType.Application.Json)
+            setBody(buildMap {
+                text?.let { put("question_text", it) }
+                options?.let { put("options", it) }
+                correctAnswer?.let { put("correct_answer", it) }
+            })
         }
+    }
 }

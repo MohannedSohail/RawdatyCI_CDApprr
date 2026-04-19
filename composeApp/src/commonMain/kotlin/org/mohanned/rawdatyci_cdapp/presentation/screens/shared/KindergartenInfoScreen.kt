@@ -1,27 +1,69 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.shared
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.mohanned.rawdatyci_cdapp.domain.model.KindergartenSettings
-import org.mohanned.rawdatyci_cdapp.presentation.components.*
-import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.components.GlassHeader
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyCard
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyDivider
+import org.mohanned.rawdatyci_cdapp.presentation.components.SectionHeader
+import org.mohanned.rawdatyci_cdapp.presentation.theme.AmberPrimary
+import org.mohanned.rawdatyci_cdapp.presentation.theme.AppBg
+import org.mohanned.rawdatyci_cdapp.presentation.theme.BlueDark
+import org.mohanned.rawdatyci_cdapp.presentation.theme.BluePrimary
+import org.mohanned.rawdatyci_cdapp.presentation.theme.CairoFontFamily
+import org.mohanned.rawdatyci_cdapp.presentation.theme.ColorError
+import org.mohanned.rawdatyci_cdapp.presentation.theme.ColorSuccess
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray100
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray200
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray300
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray500
+import org.mohanned.rawdatyci_cdapp.presentation.theme.Gray700
+import org.mohanned.rawdatyci_cdapp.presentation.theme.MintLight
+import org.mohanned.rawdatyci_cdapp.presentation.theme.MintPrimary
+import org.mohanned.rawdatyci_cdapp.presentation.theme.RawdatyGradients
+import org.mohanned.rawdatyci_cdapp.presentation.theme.White
 
 @Composable
 fun KindergartenInfoScreen(
@@ -36,7 +78,7 @@ fun KindergartenInfoScreen(
         containerColor = AppBg,
         topBar = {
             GlassHeader(
-                title = "عن الروضة", 
+                title = "عن الروضة",
                 onBack = onBack,
                 gradient = RawdatyGradients.HeroBlue,
                 headerHeight = 140.dp
@@ -71,7 +113,7 @@ fun KindergartenInfoScreen(
                                 center = Offset(size.width, 0f)
                             )
                         }
-                        
+
                         Column(
                             modifier = Modifier.fillMaxSize().padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -84,15 +126,15 @@ fun KindergartenInfoScreen(
                                 border = BorderStroke(1.dp, White.copy(0.2f))
                             ) {
                                 Icon(
-                                    Icons.Default.School, 
-                                    null, 
-                                    tint = White, 
+                                    Icons.Default.School,
+                                    null,
+                                    tint = White,
                                     modifier = Modifier.padding(20.dp).size(40.dp)
                                 )
                             }
                             Spacer(Modifier.height(16.dp))
                             Text(
-                                settings.name,
+                                settings.kindergartenName,
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = White,
                                 fontWeight = FontWeight.Black,
@@ -111,23 +153,35 @@ fun KindergartenInfoScreen(
             }
 
             // About Section
-            if (settings.about != null) {
-                item {
-                    SectionHeader("رؤيتنا ورسالتنا")
-                    RawdatyCard(elevation = 1.dp) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Icon(Icons.Outlined.Lightbulb, null, tint = AmberPrimary, modifier = Modifier.size(20.dp))
-                                Text("نبذة عن الروضة", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
-                            }
+            item {
+                SectionHeader("رؤيتنا ورسالتنا")
+                RawdatyCard(elevation = 1.dp) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.Lightbulb,
+                                null,
+                                tint = AmberPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
                             Text(
-                                settings.about,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Gray700,
-                                lineHeight = 26.sp,
+                                "نبذة عن الروضة",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = BlueDark,
                                 fontFamily = CairoFontFamily
                             )
                         }
+                        Text(
+                            "settings.about نبذة عن الروضة",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Gray700,
+                            lineHeight = 26.sp,
+                            fontFamily = CairoFontFamily
+                        )
                     }
                 }
             }
@@ -145,15 +199,15 @@ fun KindergartenInfoScreen(
                             iconColor = ColorSuccess,
                             onClick = onCallClick
                         )
-                        RawdatyDivider()
-                        // Email
-                        ContactRow(
-                            icon = Icons.Outlined.Mail,
-                            label = "البريد الإلكتروني الرسمي",
-                            value = settings.email ?: "غير متوفر",
-                            iconColor = BluePrimary,
-                            onClick = onEmailClick
-                        )
+//                        RawdatyDivider()
+//                        // Email
+//                        ContactRow(
+//                            icon = Icons.Outlined.Mail,
+//                            label = "البريد الإلكتروني الرسمي",
+//                            value = settings.email ?: "غير متوفر",
+//                            iconColor = BluePrimary,
+//                            onClick = onEmailClick
+//                        )
                         RawdatyDivider()
                         // Address
                         ContactRow(
@@ -180,15 +234,28 @@ fun KindergartenInfoScreen(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         // Simulated map background (could be an image)
-                        Icon(Icons.Default.Map, null, tint = BluePrimary.copy(0.1f), modifier = Modifier.size(200.dp))
-                        
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Icon(
+                            Icons.Default.Map,
+                            null,
+                            tint = BluePrimary.copy(0.1f),
+                            modifier = Modifier.size(200.dp)
+                        )
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             Surface(
                                 shape = CircleShape,
                                 color = White,
                                 shadowElevation = 4.dp
                             ) {
-                                Icon(Icons.Default.Place, null, tint = ColorError, modifier = Modifier.padding(12.dp).size(24.dp))
+                                Icon(
+                                    Icons.Default.Place,
+                                    null,
+                                    tint = ColorError,
+                                    modifier = Modifier.padding(12.dp).size(24.dp)
+                                )
                             }
                             Text(
                                 "عرض الموقع على الخريطة",
@@ -215,10 +282,15 @@ fun KindergartenInfoScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Icon(Icons.Default.Stars, null, tint = MintPrimary, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Stars,
+                            null,
+                            tint = MintPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            "العام الدراسي الحالي: ${settings.primaryColor}",
+                            "العام الدراسي الحالي: ${settings.academicYear}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MintPrimary,
                             fontWeight = FontWeight.Bold,
@@ -256,9 +328,25 @@ private fun ContactRow(
             Icon(icon, null, tint = iconColor, modifier = Modifier.padding(12.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = Gray500, fontFamily = CairoFontFamily)
-            Text(value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = Gray500,
+                fontFamily = CairoFontFamily
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = BlueDark,
+                fontFamily = CairoFontFamily
+            )
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null, tint = Gray300, modifier = Modifier.size(20.dp))
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            null,
+            tint = Gray300,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }

@@ -1,113 +1,85 @@
 package org.mohanned.rawdatyci_cdapp.presentation.viewmodel
 
-import org.mohanned.rawdatyci_cdapp.core.base.BaseViewModel
-import org.mohanned.rawdatyci_cdapp.core.base.UiEffect
-import org.mohanned.rawdatyci_cdapp.core.base.UiIntent
-import org.mohanned.rawdatyci_cdapp.core.base.UiState
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.data.local.AppPreferences
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import org.mohanned.rawdatyci_cdapp.core.util.UiState
 import org.mohanned.rawdatyci_cdapp.domain.model.UserRole
 import org.mohanned.rawdatyci_cdapp.domain.repository.AuthRepository
+import org.mohanned.rawdatyci_cdapp.domain.usecase.auth.LoginUseCase
+import org.mohanned.rawdatyci_cdapp.domain.usecase.auth.LogoutUseCase
 
-
-// ── State ─────────────────────────────────────────────
 data class AuthState(
-    val identifier: String = "",
+    val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
-    val identifierError: String? = null,
-    val passwordError: String? = null,
-    val generalError: String? = null,
-) : UiState
+    val error: String? = null
+)
 
-// ── Intent ────────────────────────────────────────────
-sealed class AuthIntent : UiIntent {
-    data class IdentifierChanged(val identifier: String) : AuthIntent()
-    data class PasswordChanged(val password: String)     : AuthIntent()
-    object Submit                                        : AuthIntent()
-    object ClearErrors                                   : AuthIntent()
+sealed class AuthIntent {
+    data class EmailChanged(val v: String) : AuthIntent()
+    data class PasswordChanged(val v: String) : AuthIntent()
+    object Login : AuthIntent()
+    object Logout : AuthIntent()
 }
 
-// ── Effect ────────────────────────────────────────────
-sealed class AuthEffect : UiEffect {
+sealed class AuthEffect {
     data class NavigateToDashboard(val role: UserRole) : AuthEffect()
-    data class ShowError(val message: String)          : AuthEffect()
+    object NavigateToOnboarding : AuthEffect()
+    data class ShowError(val message: String) : AuthEffect()
 }
 
-// ── ViewModel ─────────────────────────────────────────
 class AuthViewModel(
-    private val authRepository: AuthRepository,
-    private val prefs: AppPreferences,
-) : BaseViewModel<AuthState, AuthIntent, AuthEffect>(AuthState()) {
+    private val loginUseCase: LoginUseCase,
+    private val logoutUseCase: LogoutUseCase,
+    private val authRepository: AuthRepository // For session check
+) : ViewModel() {
+    private val _state = MutableStateFlow(AuthState())
+    val state = _state.asStateFlow()
 
-    override suspend fun handleIntent(intent: AuthIntent) {
+    private val _effect = Channel<AuthEffect>()
+    val effect = _effect.receiveAsFlow()
+
+    fun onIntent(intent: AuthIntent) {
         when (intent) {
-            is AuthIntent.IdentifierChanged -> {
-                updateState {
-                    copy(identifier = intent.identifier, identifierError = null)
-                }
-            }
-            is AuthIntent.PasswordChanged -> {
-                updateState {
-                    copy(password = intent.password, passwordError = null)
-                }
-            }
-            is AuthIntent.ClearErrors -> {
-                updateState {
-                    copy(
-                        identifierError = null,
-                        passwordError   = null,
-                        generalError    = null,
-                    )
-                }
-            }
-            is AuthIntent.Submit -> submit()
+            is AuthIntent.EmailChanged -> _state.update { it.copy(email = intent.v, error = null) }
+            is AuthIntent.PasswordChanged -> _state.update { it.copy(password = intent.v, error = null) }
+            AuthIntent.Login -> login()
+            AuthIntent.Logout -> logout()
         }
     }
 
-    private suspend fun submit() {
-        val current = state.value
-
-        // Validation
-        var hasError = false
-
-        if (current.identifier.isBlank()) {
-            updateState { copy(identifierError = "أدخل اسم المستخدم أو البريد الإلكتروني") }
-            hasError = true
+    fun checkSession() = viewModelScope.launch {
+        authRepository.getLoggedUser()?.let {
+            _effect.send(AuthEffect.NavigateToDashboard(it.role))
+        } ?: run {
+            _effect.send(AuthEffect.NavigateToOnboarding)
         }
+    }
 
-        if (current.password.length < 6) {
-            updateState { copy(passwordError = "كلمة المرور 6 أحرف على الأقل") }
-            hasError = true
+    private fun login() = viewModelScope.launch {
+        loginUseCase(_state.value.email, _state.value.password).collect { uiState ->
+            when (uiState) {
+                is UiState.Loading -> _state.update { it.copy(isLoading = true, error = null) }
+                is UiState.Success -> {
+                    _state.update { it.copy(isLoading = false) }
+                    _effect.send(AuthEffect.NavigateToDashboard(uiState.data.role))
+                }
+                is UiState.Error -> {
+                    _state.update { it.copy(isLoading = false, error = uiState.message) }
+                    _effect.send(AuthEffect.ShowError(uiState.message))
+                }
+            }
         }
+    }
 
-        if (hasError) return
-
-        // Call API
-        updateState { copy(isLoading = true, generalError = null) }
-
-        when (val result = authRepository.login(
-            identifier = current.identifier.trim(),
-            password   = current.password,
-        )) {
-            is ApiResponse.Success -> {
-                updateState { copy(isLoading = false) }
-                emitEffect(
-                    AuthEffect.NavigateToDashboard(result.data.first.role)
-                )
-            }
-            is ApiResponse.Error -> {
-                updateState {
-                    copy(isLoading = false, generalError = result.message)
-                }
-                emitEffect(AuthEffect.ShowError(result.message))
-            }
-            is ApiResponse.NetworkError -> {
-                updateState {
-                    copy(isLoading = false, generalError = result.message)
-                }
-                emitEffect(AuthEffect.ShowError(result.message))
-            }
+    private fun logout() = viewModelScope.launch {
+        logoutUseCase().onSuccess {
+            _effect.send(AuthEffect.NavigateToOnboarding)
+        }.onFailure {
+             _effect.send(AuthEffect.ShowError(it.message ?: "فشل تسجيل الخروج"))
         }
     }
 }

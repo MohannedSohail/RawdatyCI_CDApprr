@@ -8,72 +8,90 @@ import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
-import org.mohanned.rawdatyci_cdapp.domain.model.Classroom
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ClassroomsEffect
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ClassroomsIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ClassroomsState
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ClassroomsViewModel
+import org.mohanned.rawdatyci_cdapp.domain.model.Classroom
+
+object AdminClassroomsScreen : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: ClassroomsViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            viewModel.onIntent(ClassroomsIntent.Load)
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is ClassroomsEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
+                }
+            }
+        }
+
+        AdminClassroomsScreenContent(
+            state = state,
+            snackbarHostState = snackbarHostState,
+            onIntent = viewModel::onIntent,
+            onClassClick = { navigator.push(AdminClassDetailScreen(it.id)) },
+            onAdd = { navigator.push(AdminAddClassroomScreen(null)) },
+            onBack = { navigator.pop() }
+        )
+    }
+}
 
 @Composable
-fun AdminClassroomsScreen(
-    classrooms: List<Classroom>,
-    query: String,
-    isLoading: Boolean,
-    isLoadingMore: Boolean,
-    canLoadMore: Boolean,
-    showDeleteDialog: Boolean,
-    onSearch: (String) -> Unit,
-    onLoadMore: () -> Unit,
-    onAdd: () -> Unit,
+fun AdminClassroomsScreenContent(
+    state: ClassroomsState,
+    snackbarHostState: SnackbarHostState,
+    onIntent: (ClassroomsIntent) -> Unit,
     onClassClick: (Classroom) -> Unit,
-    onDeleteRequest: (Classroom) -> Unit,
-    onConfirmDelete: () -> Unit,
-    onDismissDelete: () -> Unit,
+    onAdd: () -> Unit,
     onBack: () -> Unit,
 ) {
     val listState = rememberLazyListState()
 
-    // Infinite Scrolling Logic
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastVisibleIndex ->
-                if (lastVisibleIndex != null && lastVisibleIndex >= classrooms.size - 2 && canLoadMore && !isLoadingMore && !isLoading) {
-                    onLoadMore()
-                }
-            }
-    }
-
-    if (showDeleteDialog) {
+    if (state.showDeleteDialog) {
         DeleteConfirmDialog(
             title = "تأكيد الحذف",
             message = "سيتم حذف الفصل وجميع بياناته نهائياً. هل أنت متأكد من هذا الإجراء؟",
-            onConfirm = onConfirmDelete,
-            onDismiss = onDismissDelete
+            onConfirm = { onIntent(ClassroomsIntent.ConfirmDelete) },
+            onDismiss = { onIntent(ClassroomsIntent.DismissDelete) }
         )
     }
 
     Scaffold(
         containerColor = AppBg,
-        topBar = { 
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
             GlassHeader(
-                title = "إدارة الفصول الدراسية", 
-                onBack = onBack, 
+                title = "إدارة الفصول الدراسية",
+                onBack = onBack,
                 gradient = RawdatyGradients.AdminHeader,
                 headerHeight = 140.dp
-            ) 
+            )
         },
-        floatingActionButton = { 
-            RawdatyFAB(onClick = onAdd, icon = Icons.Default.AddHomeWork) 
+        floatingActionButton = {
+            RawdatyFAB(onClick = onAdd, icon = Icons.Default.AddHomeWork)
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            // Premium Search Box with Cairo
             Surface(
                 color = White,
                 shadowElevation = 2.dp,
@@ -81,8 +99,8 @@ fun AdminClassroomsScreen(
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
                     OutlinedTextField(
-                        value = query,
-                        onValueChange = onSearch,
+                        value = state.query,
+                        onValueChange = { onIntent(ClassroomsIntent.Search(it)) },
                         placeholder = { Text("ابحث عن اسم الفصل...", fontFamily = CairoFontFamily, color = Gray400) },
                         leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
                         modifier = Modifier.fillMaxWidth(),
@@ -99,17 +117,19 @@ fun AdminClassroomsScreen(
                 }
             }
 
-            if (isLoading) {
+            if (state.isLoading) {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(6) { NotificationItemShimmer() }
+                    items(6) {
+                        ShimmerBox(Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(16.dp)))
+                    }
                 }
-            } else if (classrooms.isEmpty()) {
+            } else if (state.classrooms.isEmpty()) {
                 EmptyState(
                     icon = Icons.Default.Class,
-                    title = "لا توجد فصول حالياً",
-                    subtitle = "ابدأ بإضافة فصول دراسية لتوزيع الطلاب والمعلمات عليها",
-                    actionText = "إضافة فصل دراسي",
-                    onAction = onAdd
+                    title = if (state.error != null) "خطأ في التحميل" else "لا توجد فصول حالياً",
+                    subtitle = state.error ?: "ابدأ بإضافة فصول دراسية لتوزيع الطلاب والمعلمات عليها",
+                    actionText = if (state.error != null) "إعادة المحاولة" else "إضافة فصل دراسي",
+                    onAction = { if (state.error != null) onIntent(ClassroomsIntent.Load) else onAdd() }
                 )
             } else {
                 LazyColumn(
@@ -118,22 +138,21 @@ fun AdminClassroomsScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(classrooms, key = { it.id }) { classroom ->
+                    items(state.classrooms, key = { it.id }) { classroom ->
                         ClassroomCard(
-                            classroom = classroom, 
+                            classroom = classroom,
                             onClick = { onClassClick(classroom) },
-                            onDelete = { onDeleteRequest(classroom) }
+                            onDelete = { onIntent(ClassroomsIntent.DeleteRequest(classroom.id)) }
                         )
                     }
 
-                    if (isLoadingMore) {
+                    if (state.isLoadingMore) {
                         item {
                             Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(color = BluePrimary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
                             }
                         }
                     }
-                    
                     item { Spacer(Modifier.height(80.dp)) }
                 }
             }
@@ -143,7 +162,7 @@ fun AdminClassroomsScreen(
 
 @Composable
 private fun ClassroomCard(
-    classroom: Classroom, 
+    classroom: Classroom,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -152,16 +171,15 @@ private fun ClassroomCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = 2.dp
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Premium Icon Box
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .background(BlueLight.copy(0.4f)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -169,7 +187,7 @@ private fun ClassroomCard(
                         Icons.Default.School,
                         null,
                         tint = BluePrimary,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
 
@@ -181,37 +199,22 @@ private fun ClassroomCard(
                         color = Gray900,
                         fontFamily = CairoFontFamily
                     )
-                    if (classroom.teacherName != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Person, null, tint = Gray400, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                "المعلمة: ${classroom.teacherName}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Gray500,
-                                fontFamily = CairoFontFamily
-                            )
-                        }
-                    } else {
-                        Text(
-                            "لم يتم تزويد معلمة",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = AmberPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = CairoFontFamily
-                        )
-                    }
+                    Text(
+                        if (classroom.teacherName != null) "المعلمة: ${classroom.teacherName}" else "لم يتم تعيين معلمة",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (classroom.teacherName != null) Gray500 else AmberPrimary,
+                        fontFamily = CairoFontFamily
+                    )
                 }
 
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.background(Gray50, CircleShape).size(36.dp)
+                    modifier = Modifier.background(Gray50, CircleShape).size(32.dp)
                 ) {
-                    Icon(Icons.Default.DeleteOutline, null, tint = ColorError.copy(0.8f), modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.DeleteOutline, null, tint = ColorError.copy(0.8f), modifier = Modifier.size(18.dp))
                 }
             }
 
-            // Student Capacity Stats with Premium Progress
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val capacity = classroom.capacity ?: 25
                 val progress = if (capacity > 0) classroom.childrenCount.toFloat() / capacity else 0f
@@ -227,11 +230,11 @@ private fun ClassroomCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Groups, null, tint = progressColor, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Groups, null, tint = progressColor, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(
                             "الطلاب: ${classroom.childrenCount} من $capacity",
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = Gray700,
                             fontWeight = FontWeight.Bold,
                             fontFamily = CairoFontFamily
@@ -247,8 +250,8 @@ private fun ClassroomCard(
                 }
 
                 LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                    progress = { progress.coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
                     color = progressColor,
                     trackColor = Gray100
                 )

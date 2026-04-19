@@ -1,97 +1,79 @@
 package org.mohanned.rawdatyci_cdapp.data.remote.api
 
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiConfig
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.core.network.remote.safeApiCall
+import io.ktor.client.HttpClient
+import io.ktor.client.request.*
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
+import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiMessageDto
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.AuthResponseDto
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.BrandingDto
-import io.ktor.client.HttpClient
-import io.ktor.client.request.post
-import io.ktor.client.request.get
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
+import org.mohanned.rawdatyci_cdapp.data.remote.dto.VerifyOtpResponseDto
 
-class AuthApiService(private val client: HttpClient) {
+interface AuthApiService {
+    suspend fun getBranding(): ApiResponse<BrandingDto>
+    suspend fun login(email: String, password: String): ApiResponse<AuthResponseDto>
+    suspend fun refreshToken(refreshToken: String): ApiResponse<AuthResponseDto>
+    suspend fun forgotPassword(email: String): ApiResponse<ApiMessageDto>
+    suspend fun verifyOtp(email: String, otp: String): ApiResponse<VerifyOtpResponseDto>
+    suspend fun resetPassword(resetToken: String, newPassword: String, confirmPassword: String): ApiResponse<ApiMessageDto>
+    suspend fun logout(refreshToken: String): ApiResponse<ApiMessageDto>
+}
 
-    // GET /api/v1/branding
-    suspend fun getBranding(): ApiResponse<BrandingDto> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/branding")
+class AuthApiServiceImpl(private val client: HttpClient) : AuthApiService {
+
+    override suspend fun getBranding(): ApiResponse<BrandingDto> = safeApiCall {
+        client.get("branding")
+    }
+
+    override suspend fun login(email: String, password: String): ApiResponse<AuthResponseDto> = safeApiCall {
+        client.post("auth/login") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("email" to email, "password" to password))
         }
+    }
 
-    // POST /api/v1/auth/login
-    suspend fun login(
-        identifier: String,
-        password: String,
-    ): ApiResponse<AuthResponseDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/auth/login") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "username" to identifier, // Django/Ninja often uses username field
-                    "password" to password,
-                ))
-            }
+    override suspend fun refreshToken(refreshToken: String): ApiResponse<AuthResponseDto> = safeApiCall {
+        client.post("auth/refresh") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("refresh_token" to refreshToken))
         }
+    }
 
-    // POST /api/v1/auth/refresh
-    suspend fun refreshToken(
-        refreshToken: String,
-    ): ApiResponse<AuthResponseDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/auth/refresh") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("refresh_token" to refreshToken))
-            }
+    override suspend fun forgotPassword(email: String): ApiResponse<ApiMessageDto> = safeApiCall {
+        client.post("auth/forgot-password") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("email" to email))
         }
+    }
 
-    // POST /api/v1/auth/forgot-password
-    suspend fun forgotPassword(
-        identifier: String,
-    ): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/auth/forgot-password") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("identifier" to identifier))
-            }
+    override suspend fun verifyOtp(email: String, otp: String): ApiResponse<VerifyOtpResponseDto> = safeApiCall {
+        client.post("auth/verify-otp") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("email" to email, "otp" to otp))
         }
+    }
 
-    // POST /api/v1/auth/verify-otp
-    suspend fun verifyOtp(
-        identifier: String,
-        otp: String,
-    ): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/auth/verify-otp") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("identifier" to identifier, "otp" to otp))
-            }
-        }
-
-    // POST /api/v1/auth/reset-password
-    suspend fun resetPassword(
-        identifier: String,
-        otp: String,
+    override suspend fun resetPassword(
+        resetToken: String,
         newPassword: String,
-        confirmPassword: String,
-    ): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/auth/reset-password") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "identifier"            to identifier,
-                    "otp"                   to otp,
-                    "password"              to newPassword,
-                    "password_confirmation" to confirmPassword,
-                ))
-            }
+        confirmPassword: String
+    ): ApiResponse<ApiMessageDto> = safeApiCall {
+        client.post("auth/reset-password") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf(
+                "reset_token" to resetToken,
+                "password" to newPassword,
+                "password_confirmation" to confirmPassword
+            ))
         }
+    }
 
-    // POST /api/v1/auth/logout
-    suspend fun logout(): ApiResponse<ApiMessageDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/auth/logout")
+    override suspend fun logout(refreshToken: String): ApiResponse<ApiMessageDto> = safeApiCall {
+        client.post("auth/logout") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("refresh_token" to refreshToken))
         }
+    }
 }

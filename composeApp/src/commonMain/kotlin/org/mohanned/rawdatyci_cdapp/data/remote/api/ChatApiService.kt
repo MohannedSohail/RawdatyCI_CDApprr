@@ -2,66 +2,40 @@ package org.mohanned.rawdatyci_cdapp.data.remote.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.*
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiConfig
-import org.mohanned.rawdatyci_cdapp.core.network.remote.ApiResponse
-import org.mohanned.rawdatyci_cdapp.core.network.remote.safeApiCall
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.ApiListDto
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.ConversationDto
-import org.mohanned.rawdatyci_cdapp.data.remote.dto.MessageDto
+import io.ktor.http.*
+import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
+import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
+import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 
-class ChatApiService(private val client: HttpClient) {
+interface ChatApiService {
+    suspend fun getConversations(): ApiResponse<List<ConversationDto>>
+    suspend fun startConversation(participantId: String): ApiResponse<ConversationDto>
+    suspend fun getMessages(conversationId: String, page: Int): ApiResponse<ApiListDto<MessageDto>>
+    suspend fun sendMessage(conversationId: String, content: String, imageUrl: String?): ApiResponse<MessageDto>
+}
 
-    // GET /api/v1/chat/conversations
-    suspend fun getConversations(
-        page: Int = 1,
-    ): ApiResponse<ApiListDto<ConversationDto>> =
-        safeApiCall {
-            client.get("${ApiConfig.BASE_URL}/chat/conversations") {
-                parameter("page", page)
-            }
+class ChatApiServiceImpl(private val client: HttpClient) : ChatApiService {
+    override suspend fun getConversations(): ApiResponse<List<ConversationDto>> = safeApiCall {
+        client.get("chat/conversations")
+    }
+
+    override suspend fun startConversation(participantId: String): ApiResponse<ConversationDto> = safeApiCall {
+        client.post("chat/conversations") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("participant_id" to participantId))
         }
+    }
 
-    // GET /api/v1/chat/conversations/:id/messages
-    suspend fun getMessages(
-        conversationId: Int,
-        page: Int = 1,
-    ): ApiResponse<ApiListDto<MessageDto>> =
-        safeApiCall {
-            client.get(
-                "${ApiConfig.BASE_URL}/chat/conversations/$conversationId/messages"
-            ) {
-                parameter("page", page)
-            }
+    override suspend fun getMessages(conversationId: String, page: Int): ApiResponse<ApiListDto<MessageDto>> = safeApiCall {
+        client.get("chat/conversations/$conversationId/messages") {
+            parameter("page", page)
         }
+    }
 
-    // POST /api/v1/chat/conversations/:id/messages
-    suspend fun sendMessage(
-        conversationId: Int,
-        content: String,
-    ): ApiResponse<MessageDto> =
-        safeApiCall {
-            client.post(
-                "${ApiConfig.BASE_URL}/chat/conversations/$conversationId/messages"
-            ) {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf("content" to content))
-            }
+    override suspend fun sendMessage(conversationId: String, content: String, imageUrl: String?): ApiResponse<MessageDto> = safeApiCall {
+        client.post("chat/conversations/$conversationId/messages") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("content" to content, "image_url" to imageUrl))
         }
-
-    // POST /api/v1/chat/conversations
-    suspend fun startConversation(
-        participantId: Int,
-        childId: Int? = null,
-    ): ApiResponse<ConversationDto> =
-        safeApiCall {
-            client.post("${ApiConfig.BASE_URL}/chat/conversations") {
-                contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "participant_id" to participantId,
-                    "child_id"       to childId,
-                ))
-            }
-        }
+    }
 }

@@ -1,46 +1,68 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.teacher
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.domain.model.Conversation
-import org.mohanned.rawdatyci_cdapp.presentation.components.*
+import org.mohanned.rawdatyci_cdapp.presentation.components.EmptyState
+import org.mohanned.rawdatyci_cdapp.presentation.components.GlassHeader
+import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyAvatar
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ChatIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.ChatViewModel
+
+object TeacherConversationsScreen : Screen {
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel: ChatViewModel = koinViewModel()
+        val state by viewModel.state.collectAsState()
+
+        LaunchedEffect(Unit) {
+            viewModel.onIntent(ChatIntent.LoadConversations)
+        }
+
+        TeacherConversationsScreenContent(
+            conversations = state.conversations,
+            isLoading = state.isLoading,
+            onConversationClick = { conversation ->
+                navigator.push(ChatRoomScreen(conversation.id, conversation.participantName, conversation.childName ?: ""))
+            },
+            onBack = { navigator.pop() }
+        )
+    }
+}
 
 @Composable
-fun TeacherConversationsScreen(
+fun TeacherConversationsScreenContent(
     conversations: List<Conversation>,
-    query: String,
     isLoading: Boolean,
-    isLoadingMore: Boolean,
-    canLoadMore: Boolean,
-    onSearch: (String) -> Unit,
-    onLoadMore: () -> Unit,
     onConversationClick: (Conversation) -> Unit,
-    onBack: () -> Unit,
+    onBack: () -> Unit
 ) {
     Scaffold(
         containerColor = AppBg,
         topBar = {
             GlassHeader(
-                title = "رسائل المعلمة", 
+                title = "رسائل المعلمة",
                 onBack = onBack,
                 gradient = RawdatyGradients.HeroBlue,
                 headerHeight = 140.dp
@@ -48,32 +70,6 @@ fun TeacherConversationsScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            // Modern Search Bar Section
-            Surface(
-                color = White,
-                shadowElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(modifier = Modifier.padding(16.dp)) {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = onSearch,
-                        placeholder = { Text("ابحث في المحادثات...", fontFamily = CairoFontFamily, color = Gray400) },
-                        leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BluePrimary,
-                            unfocusedBorderColor = Gray200,
-                            focusedContainerColor = Gray50,
-                            unfocusedContainerColor = Gray50
-                        )
-                    )
-                }
-            }
-
             if (isLoading && conversations.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = BluePrimary)
@@ -91,16 +87,11 @@ fun TeacherConversationsScreen(
                 ) {
                     items(conversations, key = { it.id }) { conversation ->
                         ConversationItem(conversation) { onConversationClick(conversation) }
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), thickness = 0.5.dp, color = Gray100.copy(0.5f))
-                    }
-                    
-                    if (canLoadMore) {
-                        item {
-                            LaunchedEffect(Unit) { onLoadMore() }
-                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = BluePrimary)
-                            }
-                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            thickness = 0.5.dp,
+                            color = Gray100.copy(0.5f)
+                        )
                     }
                 }
             }
@@ -117,14 +108,13 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit) {
             .padding(horizontal = 20.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Premium Avatar with Activity Status
         Box {
             RawdatyAvatar(
                 name = conversation.participantName,
                 size = 56.dp,
                 gradient = if (conversation.unreadCount > 0) RawdatyGradients.AvatarBlue else RawdatyGradients.AvatarMint
             )
-            
+
             if (conversation.isOnline) {
                 Box(
                     modifier = Modifier
@@ -142,7 +132,10 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit) {
         Spacer(Modifier.width(16.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Text(
                     conversation.participantName,
                     style = MaterialTheme.typography.titleMedium,
@@ -180,7 +173,10 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit) {
             )
         }
 
-        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Text(
                 conversation.lastMessageAt ?: "",
                 style = MaterialTheme.typography.labelSmall,
@@ -203,58 +199,5 @@ fun ConversationItem(conversation: Conversation, onClick: () -> Unit) {
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun TeacherConversationsPreview() {
-    RawdatyTheme {
-        val dummyConversations = listOf(
-            Conversation(
-                id = 1,
-                participantId = 101,
-                participantName = "محمد العلي",
-                participantAvatar = null,
-                childName = "أحمد العلي",
-                lastMessage = "مرحباً أ. سارة، كيف حال أحمد اليوم؟",
-                lastMessageAt = "09:00 ص",
-                unreadCount = 2,
-                isOnline = true
-            ),
-            Conversation(
-                id = 2,
-                participantId = 102,
-                participantName = "سارة العلي",
-                participantAvatar = null,
-                childName = "ليان العلي",
-                lastMessage = "شكراً جزيلاً على مجهوداتكم.",
-                lastMessageAt = "أمس",
-                unreadCount = 0,
-                isOnline = false
-            ),
-            Conversation(
-                id = 3,
-                participantId = 103,
-                participantName = "خالد فهد",
-                participantAvatar = null,
-                childName = "فهد خالد",
-                lastMessage = "هل يوجد واجب منزلي اليوم؟",
-                lastMessageAt = "السبت",
-                unreadCount = 0,
-                isOnline = true
-            )
-        )
-        TeacherConversationsScreen(
-            conversations = dummyConversations,
-            query = "",
-            isLoading = false,
-            isLoadingMore = false,
-            canLoadMore = false,
-            onSearch = {},
-            onLoadMore = {},
-            onConversationClick = {},
-            onBack = {}
-        )
     }
 }
