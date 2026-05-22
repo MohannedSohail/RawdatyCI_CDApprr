@@ -1,5 +1,5 @@
 # 🌱 Rawdaty KMP App
----
+
 
 <div align="center">
 
@@ -26,11 +26,9 @@
   <img src="https://img.shields.io/badge/Status-Active%20Development-43A047?style=flat-square" />
 
 </div>
-
+---
 A modern Kindergarten Management System built using **Kotlin Multiplatform (KMP)** and **Compose Multiplatform** to provide a scalable and cross-platform solution for managing kindergartens, students, teachers, and parents.
 
-
---
 
 <img width="5043" height="2874" alt="Cover Rwdaty" src="https://github.com/user-attachments/assets/faa7a0fc-4b42-42bf-b211-7da33e5cb798" />
 
