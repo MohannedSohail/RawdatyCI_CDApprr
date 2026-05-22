@@ -2,6 +2,35 @@
 
 A modern Kindergarten Management System built using **Kotlin Multiplatform (KMP)** and **Compose Multiplatform** to provide a scalable and cross-platform solution for managing kindergartens, students, teachers, and parents.
 
+<div align="center">
+
+  <img src="https://img.shields.io/badge/Kotlin%20Multiplatform-7F52FF?style=flat-square&logo=kotlin&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/Compose%20Multiplatform-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/Clean%20Architecture-00C853?style=flat-square&logo=dependabot&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/MVVM-2962FF?style=flat-square&logo=android&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/Koin-F57C00?style=flat-square&logo=kotlin&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/Coroutines-009688?style=flat-square&logo=kotlin&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/Material%203-6200EE?style=flat-square&logo=materialdesign&logoColor=white" />
+
+  <br>
+
+  <img src="https://img.shields.io/badge/Platform-Android%20%7C%20Desktop%20%7C%20iOS-1976D2?style=flat-square&logo=android&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/Kindergarten%20Management-System-EC407A?style=flat-square&logo=googleclassroom&logoColor=white" />
+
+  <img src="https://img.shields.io/badge/Status-Active%20Development-43A047?style=flat-square" />
+
+</div>
+
+
+
+
 
 <img width="5043" height="2874" alt="Cover Rwdaty" src="https://github.com/user-attachments/assets/faa7a0fc-4b42-42bf-b211-7da33e5cb798" />
 
