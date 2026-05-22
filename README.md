@@ -1,6 +1,5 @@
 # 🌱 Rawdaty KMP App
-
-A modern Kindergarten Management System built using **Kotlin Multiplatform (KMP)** and **Compose Multiplatform** to provide a scalable and cross-platform solution for managing kindergartens, students, teachers, and parents.
+---
 
 <div align="center">
 
@@ -28,9 +27,10 @@ A modern Kindergarten Management System built using **Kotlin Multiplatform (KMP)
 
 </div>
 
+A modern Kindergarten Management System built using **Kotlin Multiplatform (KMP)** and **Compose Multiplatform** to provide a scalable and cross-platform solution for managing kindergartens, students, teachers, and parents.
 
 
-
+--
 
 <img width="5043" height="2874" alt="Cover Rwdaty" src="https://github.com/user-attachments/assets/faa7a0fc-4b42-42bf-b211-7da33e5cb798" />
 
@@ -44,12 +44,12 @@ A modern Kindergarten Management System built using **Kotlin Multiplatform (KMP)
 - 👨‍👩‍👧 Parent Portal
 - 📚 Student Tracking
 - 📅 Attendance System
-- 💬 Notifications & Communication
 - 🔐 Authentication & Authorization
-- ☁️ Firebase Integration
 - 🖥️ Desktop Support
 - 📱 Android Ready
 - 🌍 Cross-platform Architecture
+- 💬 Notifications & Communication
+
 
 ---
 
@@ -86,7 +86,6 @@ Domain Layer
 
 Data Layer
 │
-├── Firebase Services
 ├── Repositories
 └── DTO / Models
 ```
