@@ -8,16 +8,19 @@ import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
 
 interface GamesApiService {
-    suspend fun getQuestions(gameType: String): ApiResponse<List<GameQuestionDto>>
+    suspend fun getQuestions(gameType: String, childId: String): ApiResponse<List<GameQuestionDto>>
     suspend fun saveResult(request: GameResultRequest): ApiResponse<Unit>
-    suspend fun getChildHistory(childId: String, gameType: String?): ApiResponse<List<GameResultRequest>> // Using GameResultRequest as a placeholder or DTO if defined
+    suspend fun getChildHistory(childId: String, gameType: String?): ApiResponse<List<GameResultRequest>>
     suspend fun getQuestionBank(): ApiResponse<List<GameQuestionDto>>
-    suspend fun updateQuestion(id: String, text: String?, options: List<String>?, correctAnswer: String?): ApiResponse<GameQuestionDto>
+    suspend fun updateQuestion(id: String, correctAnswer: String?, isActive: Boolean?): ApiResponse<GameQuestionDto>
 }
 
 class GamesApiServiceImpl(private val client: HttpClient) : GamesApiService {
-    override suspend fun getQuestions(gameType: String): ApiResponse<List<GameQuestionDto>> = safeApiCall {
-        client.get("games/questions") { parameter("game_type", gameType) }
+    override suspend fun getQuestions(gameType: String, childId: String): ApiResponse<List<GameQuestionDto>> = safeApiCall {
+        client.get("games/questions") { 
+            parameter("game_type", gameType)
+            parameter("child_id", childId)
+        }
     }
 
     override suspend fun saveResult(request: GameResultRequest): ApiResponse<Unit> = safeApiCall {
@@ -28,20 +31,21 @@ class GamesApiServiceImpl(private val client: HttpClient) : GamesApiService {
     }
 
     override suspend fun getChildHistory(childId: String, gameType: String?): ApiResponse<List<GameResultRequest>> = safeApiCall {
-        client.get("games/results/$childId") { parameter("game_type", gameType) }
+        client.get("games/results/$childId") { 
+            parameter("game_type", gameType) 
+        }
     }
 
     override suspend fun getQuestionBank(): ApiResponse<List<GameQuestionDto>> = safeApiCall {
         client.get("games/questions/bank")
     }
 
-    override suspend fun updateQuestion(id: String, text: String?, options: List<String>?, correctAnswer: String?): ApiResponse<GameQuestionDto> = safeApiCall {
+    override suspend fun updateQuestion(id: String, correctAnswer: String?, isActive: Boolean?): ApiResponse<GameQuestionDto> = safeApiCall {
         client.patch("games/questions/$id") {
             contentType(ContentType.Application.Json)
             setBody(buildMap {
-                text?.let { put("question_text", it) }
-                options?.let { put("options", it) }
                 correctAnswer?.let { put("correct_answer", it) }
+                isActive?.let { put("is_active", it) }
             })
         }
     }

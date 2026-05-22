@@ -171,8 +171,8 @@ fun RawdatyConfirmDialog(
         AlertDialog(
             onDismissRequest = onDismiss,
             icon = { Icon(Icons.Default.Delete, contentDescription = null, tint = ColorError) },
-            title = { Text(title, fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold) },
-            text = { Text(message, fontFamily = CairoFontFamily) },
+            title = { Text(title, fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color =Color.Black) },
+            text = { Text(message, fontFamily = CairoFontFamily,color =Color.Black) },
             confirmButton = {
                 Button(
                     onClick = onConfirm,

@@ -22,6 +22,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 import rawdatyci_cdapp.composeapp.generated.resources.Res
@@ -57,8 +60,8 @@ fun RawdatyBottomNav(
             containerColor = White,
             contentColor = BluePrimary,
             tonalElevation = 0.dp,
-            modifier = Modifier.height(80.dp), // ارتفاع رشيق ومتناسق
-            windowInsets = WindowInsets(0, 0, 0, 0) // لتمركز العناصر عمودياً تماماً
+            modifier = Modifier.height(80.dp),
+            windowInsets = WindowInsets(0, 0, 0, 0)
         ) {
             items.forEachIndexed { index, item ->
                 NavigationBarItem(
@@ -128,7 +131,6 @@ fun WaveHeader(
                     actions()
                 }
 
-                // Back Button on the right (RTL)
                 if (onBack != null) {
                     IconButton(
                         onClick = onBack,
@@ -206,7 +208,6 @@ fun OnBoardingHeader(
                     actions()
                 }
 
-                // Back Button on the right (RTL)
                 if (onBack != null) {
                     IconButton(
                         onClick = onBack,
@@ -285,7 +286,7 @@ fun GlassHeader(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start // RTL
+            horizontalArrangement = Arrangement.Start
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 actions()
@@ -504,6 +505,8 @@ fun RawdatyField(
     modifier: Modifier = Modifier,
     backgroundColor: Color = White
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = value,
@@ -526,15 +529,23 @@ fun RawdatyField(
                     modifier = Modifier.size(22.dp)
                 )
             },
+            trailingIcon = if (isPassword) {
+                {
+                    val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(icon, contentDescription = null, tint = Gray400)
+                    }
+                }
+            } else null,
             enabled = enabled,
             isError = isError,
             singleLine = singleLine,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+            visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             textStyle = LocalTextStyle.current.copy(
                 fontFamily = CairoFontFamily,
-                color = Color.DarkGray
+                color = if (enabled) Color.DarkGray else Gray900
             ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = backgroundColor,
@@ -543,8 +554,12 @@ fun RawdatyField(
                 focusedBorderColor = BluePrimary,
                 unfocusedBorderColor = Gray200,
                 errorBorderColor = ColorError,
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black
+                focusedTextColor = Gray900,
+                unfocusedTextColor = Gray900,
+                disabledTextColor = Gray900,
+                disabledLabelColor = Gray400,
+                focusedLabelColor = Gray400,
+                unfocusedLabelColor = Gray400
             )
         )
         if (isError && errorMessage != null) {
@@ -557,6 +572,37 @@ fun RawdatyField(
             )
         }
     }
+}
+
+@Composable
+fun RawdatySearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    placeholder: String = "بحث...",
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier.fillMaxWidth(),
+        placeholder = { Text(placeholder, fontFamily = CairoFontFamily) },
+        leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(Icons.Default.Close, null, tint = Gray400)
+                }
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = White,
+            unfocusedContainerColor = White,
+            focusedBorderColor = BluePrimary,
+            unfocusedBorderColor = Gray100
+        )
+    )
 }
 
 @Composable
@@ -640,7 +686,7 @@ fun RoleTag(role: String, useSmallText: Boolean = false) {
     ) {
         Text(
             role,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
             style = if (useSmallText) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium,
             color = BluePrimary,
             fontWeight = FontWeight.Bold,
@@ -766,6 +812,43 @@ fun LoadingScreen() {
 }
 
 @Composable
+fun ErrorState(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(Icons.Default.ErrorOutline, null, modifier = Modifier.size(72.dp), tint = ColorError)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "عذراً، حدث خطأ",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Gray800,
+            fontFamily = CairoFontFamily
+        )
+        Text(
+            message,
+            style = MaterialTheme.typography.bodySmall,
+            color = Gray500,
+            textAlign = TextAlign.Center,
+            fontFamily = CairoFontFamily
+        )
+        Spacer(Modifier.height(24.dp))
+        RawdatyButton(
+            text = "إعادة المحاولة",
+            onClick = onRetry,
+            backgroundColor = BluePrimary.copy(0.1f),
+            textColor = BluePrimary,
+            modifier = Modifier.wrapContentWidth()
+        )
+    }
+}
+
+@Composable
 fun EmptyState(
     title: String,
     subtitle: String = "",
@@ -818,8 +901,8 @@ fun DeleteConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title, fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold) },
-        text = { Text(message, fontFamily = CairoFontFamily) },
+        title = { Text(title, fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = Black) },
+        text = { Text(message, fontFamily = CairoFontFamily,color = Black) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
@@ -832,7 +915,7 @@ fun DeleteConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("إلغاء", color = Gray500, fontFamily = CairoFontFamily)
+                Text("إلغاء", color = Gray50, fontFamily = CairoFontFamily)
             }
         },
         containerColor = White,
@@ -842,7 +925,6 @@ fun DeleteConfirmDialog(
 
 @Composable
 fun OfflineIndicator() {
-    // Hidden as we are moving to full API approach and removing offline complexity
 }
 
 @Composable
@@ -917,13 +999,64 @@ fun NotificationItem(
 }
 
 @Composable
-fun ShimmerBox(modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition()
-    val alpha by transition.animateFloat(
-        initialValue = 0.3f, targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(animation = tween(1000), repeatMode = RepeatMode.Reverse)
-    )
-    Box(modifier = modifier.background(Gray200.copy(alpha = alpha)))
+fun ModernHeader(
+    title: String,
+    subtitle: String? = null,
+    onBack: (() -> Unit)? = null,
+    gradient: Brush = RawdatyGradients.HeroBlue,
+    headerHeight: Dp = 140.dp
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(headerHeight)
+            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            .background(gradient)
+    ) {
+        Column(
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (onBack != null) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(White.copy(alpha = 0.15f))
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = White, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.width(16.dp))
+                }
+
+                Column {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = White,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = CairoFontFamily
+                    )
+                    if (subtitle != null) {
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = White.copy(alpha = 0.8f),
+                            fontFamily = CairoFontFamily
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -935,19 +1068,26 @@ fun AnimateEntrance(delay: Int = 0, content: @Composable () -> Unit) {
     }
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(500)) + slideInVertically(
+        enter = fadeIn(animationSpec = tween(600)) + slideInVertically(
             initialOffsetY = { 40 },
-            animationSpec = tween(500)
+            animationSpec = tween(600, easing = FastOutSlowInEasing)
         ),
         content = { content() }
     )
 }
 
-
 @Composable
-fun WaveShape(): Shape = object : Shape {
+fun ShimmerBox(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition()
+    val alpha by transition.animateFloat(
+        initialValue = 0.3f, targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(animation = tween(500), repeatMode = RepeatMode.Reverse)
+    )
+    Box(modifier = modifier.background(Gray200.copy(alpha = alpha)))
+}
 
 
+class WaveShape : Shape {
     override fun createOutline(
         size: androidx.compose.ui.geometry.Size,
         layoutDirection: LayoutDirection,
@@ -961,6 +1101,124 @@ fun WaveShape(): Shape = object : Shape {
             close()
         }
         return Outline.Generic(path)
+    }
+}
 
+@Composable
+fun ParentHomeHeader(
+    parentName: String,
+    onNotificationClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val greeting = when (now.hour) {
+        in 5..11 -> "صباح الخير"
+        in 12..17 -> "طاب يومك"
+        else -> "مساء الخير"
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+            .background(RawdatyGradients.HeroBlue)
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                color = Color.White.copy(alpha = 0.05f),
+                radius = size.minDimension / 1.0f,
+                center = androidx.compose.ui.geometry.Offset(size.width * 0.9f, 0f)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 20.dp)
+                .fillMaxSize()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.clickable { onProfileClick() }) {
+                        RawdatyAvatar(
+                            name = if (parentName.isNotBlank()) parentName else "Parent",
+                            size = 50.dp,
+                            gradient = RawdatyGradients.AvatarBlue
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = greeting,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(0.7f),
+                            fontFamily = CairoFontFamily
+                        )
+                        Text(
+                            text = if (parentName.isNotBlank()) parentName else "ولي الأمر",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            fontFamily = CairoFontFamily,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onNotificationClick,
+                    modifier = Modifier
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(0.15f))
+                ) {
+                    Box {
+                        Icon(
+                            Icons.Outlined.Notifications,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .align(Alignment.TopEnd)
+                                .offset(x = 2.dp, y = (-2).dp)
+                                .clip(CircleShape)
+                                .background(ColorError)
+                                .border(1.5.dp, BlueDark, CircleShape)
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Surface(
+                color = Color.White.copy(0.1f),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.wrapContentWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Default.Today, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "${now.dayOfMonth}/${now.monthNumber}/${now.year}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontFamily = CairoFontFamily,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }

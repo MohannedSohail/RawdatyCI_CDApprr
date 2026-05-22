@@ -79,6 +79,7 @@ data class UserDto(
     @SerialName("class_id")    val classId: String? = null,
     @SerialName("class_name")  val className: String? = null,
     @SerialName("created_at")  val createdAt: String = "",
+    @SerialName("children_data") val childrenData: List<ChildDto>? = null
 )
 
 @Serializable
@@ -88,7 +89,17 @@ data class CreateUserRequest(
     val password: String,
     val role: String,
     val phone: String? = null,
-    @SerialName("class_id") val classId: String? = null
+    @SerialName("class_id") val classId: String? = null,
+    val children: List<CreateChildRequest>? = null
+)
+
+@Serializable
+data class CreateChildRequest(
+    val name: String,
+    @SerialName("parent_id") val parentId: String? = null,
+    @SerialName("class_id") val classId: String? = null,
+    @SerialName("birth_date") val birthDate: String? = null,
+    val gender: String
 )
 
 @Serializable
@@ -100,17 +111,25 @@ data class UpdateUserRequest(
 
 // ── Class ─────────────────────────────────────────────
 @Serializable
+data class TeacherShortDto(
+    val id: String,
+    val name: String
+)
+
+@Serializable
 data class ClassDto(
     val id: String,
     val name: String,
     val description: String? = null,
     @SerialName("teacher_id")     val teacherId: String? = null,
     @SerialName("teacher_name")   val teacherName: String? = null,
+    val teacher: TeacherShortDto? = null,
     @SerialName("children_count") val childrenCount: Int = 0,
     val capacity: Int? = null,
     @SerialName("academic_year")  val academicYear: String = "",
     @SerialName("is_active")      val isActive: Boolean = true,
     @SerialName("created_at")     val createdAt: String = "",
+    val children: List<ChildDto>? = null
 )
 
 @Serializable
@@ -137,8 +156,9 @@ data class ChildDto(
     @SerialName("date_of_birth")   val dateOfBirth: String? = null,
     val gender: String = "",
     @SerialName("photo_url")       val photoUrl: String? = null,
-    @SerialName("class_id")        val classId: String = "",
-    @SerialName("class_name")      val className: String = "",
+    @SerialName("class_id")        val classId: String? = null,
+    @SerialName("class")           val classField: String? = null,
+    @SerialName("class_name")      val className: String? = null,
     @SerialName("parent_id")       val parentId: String? = null,
     @SerialName("parent_name")     val parentName: String? = null,
     @SerialName("parent_phone")    val parentPhone: String? = null,
@@ -149,6 +169,7 @@ data class ChildDto(
 ) {
     val displayName: String get() = fullName.ifEmpty { name }
     val dob: String? get() = dateOfBirth ?: birthDate
+    val resolvedClassId: String get() = classId ?: classField ?: ""
 }
 
 // ── Attendance ────────────────────────────────────────

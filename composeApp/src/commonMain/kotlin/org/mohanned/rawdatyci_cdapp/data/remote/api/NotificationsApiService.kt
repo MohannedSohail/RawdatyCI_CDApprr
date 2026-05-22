@@ -46,7 +46,7 @@ class NotificationsApiServiceImpl(private val client: HttpClient) : Notification
     override suspend fun updateFcmToken(token: String, deviceType: String): ApiResponse<Unit> = safeApiCall {
         client.post("notifications/fcm-token") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("token" to token, "device_type" to deviceType))
+            setBody(mapOf("fcm_token" to token, "device_type" to deviceType))
         }
     }
 }

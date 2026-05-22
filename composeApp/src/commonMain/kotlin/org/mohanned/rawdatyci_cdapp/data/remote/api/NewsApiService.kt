@@ -10,6 +10,7 @@ import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 interface NewsApiService {
     suspend fun getNews(type: String?, page: Int): ApiResponse<ApiListDto<NewsDto>>
     suspend fun getNewsById(id: String): ApiResponse<NewsDto>
+    suspend fun getSliderImages(): ApiResponse<List<NewsDto>>
     suspend fun createNews(title: String, body: String, type: String, isVisible: Boolean): ApiResponse<NewsDto>
     suspend fun updateNews(id: String, title: String?, body: String?, type: String?, isVisible: Boolean?): ApiResponse<NewsDto>
     suspend fun deleteNews(id: String): ApiResponse<Unit>
@@ -25,6 +26,10 @@ class NewsApiServiceImpl(private val client: HttpClient) : NewsApiService {
 
     override suspend fun getNewsById(id: String): ApiResponse<NewsDto> = safeApiCall {
         client.get("news/$id")
+    }
+
+    override suspend fun getSliderImages(): ApiResponse<List<NewsDto>> = safeApiCall {
+        client.get("news/slider")
     }
 
     override suspend fun createNews(title: String, body: String, type: String, isVisible: Boolean): ApiResponse<NewsDto> = safeApiCall {

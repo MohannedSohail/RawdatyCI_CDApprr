@@ -1,26 +1,6 @@
 package org.mohanned.rawdatyci_cdapp.data.remote.dto
 
-import org.mohanned.rawdatyci_cdapp.domain.model.AppNotification
-import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceRecord
-import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceStatus
-import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceSummary
-import org.mohanned.rawdatyci_cdapp.domain.model.Branding
-import org.mohanned.rawdatyci_cdapp.domain.model.Child
-import org.mohanned.rawdatyci_cdapp.domain.model.Classroom
-import org.mohanned.rawdatyci_cdapp.domain.model.Complaint
-import org.mohanned.rawdatyci_cdapp.domain.model.ComplaintStatus
-import org.mohanned.rawdatyci_cdapp.domain.model.Conversation
-import org.mohanned.rawdatyci_cdapp.domain.model.GameQuestion
-import org.mohanned.rawdatyci_cdapp.domain.model.GameType
-import org.mohanned.rawdatyci_cdapp.domain.model.KindergartenSettings
-import org.mohanned.rawdatyci_cdapp.domain.model.LoggedUser
-import org.mohanned.rawdatyci_cdapp.domain.model.Message
-import org.mohanned.rawdatyci_cdapp.domain.model.News
-import org.mohanned.rawdatyci_cdapp.domain.model.NewsType
-import org.mohanned.rawdatyci_cdapp.domain.model.PageMeta
-import org.mohanned.rawdatyci_cdapp.domain.model.PaginatedResult
-import org.mohanned.rawdatyci_cdapp.domain.model.User
-import org.mohanned.rawdatyci_cdapp.domain.model.UserRole
+import org.mohanned.rawdatyci_cdapp.domain.model.*
 
 fun AuthUserDto.toLoggedUser(tenantSlug: String) = LoggedUser(
     id = id, name = name, email = email,
@@ -36,18 +16,26 @@ fun UserDto.toDomain() = User(
     id = id, name = name, email = email, phone = phone,
     role = role.toUserRole(), avatarUrl = avatarUrl, isActive = isActive,
     classId = classId, className = className, createdAt = createdAt,
+    children = childrenData?.map { it.toDomain() }
 )
 
 fun ClassDto.toDomain() = Classroom(
-    id = id, name = name, description = description,
-    teacherId = teacherId, teacherName = teacherName,
-    childrenCount = childrenCount, capacity = capacity,
-    academicYear = academicYear, isActive = isActive, createdAt = createdAt,
+    id = id,
+    name = name,
+    description = description,
+    teacherId = teacher?.id ?: teacherId,
+    teacherName = teacher?.name ?: teacherName,
+    childrenCount = childrenCount,
+    capacity = capacity,
+    academicYear = academicYear,
+    isActive = isActive,
+    createdAt = createdAt,
+    children = children?.map { it.toDomain() }
 )
 
 fun ChildDto.toDomain() = Child(
     id = id, fullName = displayName, dateOfBirth = dob, gender = gender,
-    photoUrl = photoUrl, classId = classId, className = className,
+    photoUrl = photoUrl, classId = resolvedClassId, className = className ?: "",
     parentId = parentId, parentName = parentName, parentPhone = parentPhone,
     enrollmentDate = enrollmentDate, stars = stars, notes = notes, allergies = allergies,
 )

@@ -1,6 +1,9 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.parent.studentGames
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -16,14 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import io.ktor.util.reflect.*
 import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.domain.model.GameQuestion
 import org.mohanned.rawdatyci_cdapp.domain.model.GameType
@@ -35,7 +36,7 @@ import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.GameEffect
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.GameIntent
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.GameViewModel
 
-data class GamePlayScreen(val gameType: GameType, val childId: String = "") : Screen {
+data class GamePlayScreen(val gameType: GameType, val level: Int, val childId: String = "") : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
@@ -43,7 +44,10 @@ data class GamePlayScreen(val gameType: GameType, val childId: String = "") : Sc
         val state by viewModel.state.collectAsState()
 
         LaunchedEffect(Unit) {
-            viewModel.onIntent(GameIntent.Start(gameType, childId))
+            viewModel.onIntent(GameIntent.Start(gameType, level, childId))
+        }
+
+        LaunchedEffect(Unit) {
             viewModel.effect.collect { effect ->
                 if (effect is GameEffect.ShowResult) {
                     navigator.replace(GameResultScreen(gameType, effect.score, effect.total, effect.stars, effect.elapsedSeconds, childId))
@@ -51,142 +55,178 @@ data class GamePlayScreen(val gameType: GameType, val childId: String = "") : Sc
             }
         }
 
+        // ✅ أنيميشن انسيابي لشريط التقدم
+        val progressAnimated by animateFloatAsState(
+            targetValue = if (state.totalQuestions > 0) (state.currentIndex + 1).toFloat() / state.totalQuestions else 0f,
+            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+            label = "progress"
+        )
+
         Scaffold(
             containerColor = AppBg,
             topBar = {
                 GlassHeader(
-                    title = when(gameType) {
-                        GameType.LETTERS -> "لعبة الحروف"
-                        GameType.NUMBERS -> "لعبة الأرقام"
-                        GameType.COLORS -> "لعبة الألوان"
-                    },
+                    title = "مغامرة التعلم",
+                    subtitle = "المستوى $level",
                     onBack = { navigator.pop() },
                     gradient = RawdatyGradients.HeroBlue,
-                    headerHeight = 100.dp
+                    headerHeight = 110.dp
                 )
+            },
+            bottomBar = {
+                Surface(
+                    color = White,
+                    shadowElevation = 16.dp,
+                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp).navigationBarsPadding()) {
+                        if (state.isAnswered) {
+                            FeedbackSection(state.isCorrect)
+                            Spacer(Modifier.height(16.dp))
+                        }
+                        
+                        RawdatyButton(
+                            text = if (state.isAnswered) {
+                                if (state.currentIndex + 1 == state.totalQuestions) "مشاهدة النتيجة" else "السؤال التالي"
+                            } else "تأكيد الإجابة",
+                            onClick = { 
+                                if (state.isAnswered) viewModel.onIntent(GameIntent.NextQuestion)
+                                else viewModel.onIntent(GameIntent.CheckAnswer)
+                            },
+                            enabled = state.selectedOption != null || state.isAnswered,
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            backgroundColor = if (state.isAnswered) MintPrimary else BluePrimary
+                        )
+                    }
+                }
             }
         ) { padding ->
-            if (state.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = BluePrimary)
+            Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+                if (state.isLoading) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BluePrimary)
+                    }
+                } else if (state.currentQuestion != null) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        // Progress Section
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("السؤال ${state.currentIndex + 1} من ${state.totalQuestions}", fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
+                            LinearProgressIndicator(
+                                progress = { progressAnimated }, // ✅ استخدام القيمة المتحركة
+                                modifier = Modifier.fillMaxWidth().height(10.dp).clip(CircleShape),
+                                color = BluePrimary,
+                                trackColor = Gray200
+                            )
+                        }
+
+                        // ✅ أنيميشن الانتقال بين الأسئلة (Slide + Fade)
+                        AnimatedContent(
+                            targetState = state.currentIndex,
+                            transitionSpec = {
+                                (slideInHorizontally { width -> width } + fadeIn(tween(400))).togetherWith(
+                                    slideOutHorizontally { width -> -width } + fadeOut(tween(400))
+                                )
+                            },
+                            label = "question_transition",
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        ) { index ->
+                            // سيتم تحديث المحتوى بناءً على السؤال الحالي في الـ state
+                            val question = state.questions.getOrNull(index) ?: state.currentQuestion!!
+                            
+                            Column(
+                                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                // Question Card
+                                RawdatyCard(containerColor = White, elevation = 4.dp) {
+                                    Text(
+                                        text = question.questionText,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.Black,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                        fontFamily = CairoFontFamily
+                                    )
+                                }
+
+                                // Options
+                                question.options.forEach { option ->
+                                    OptionItem(
+                                        text = option,
+                                        isSelected = state.selectedOption == option,
+                                        isAnswered = state.isAnswered,
+                                        isCorrect = option == question.correctAnswer,
+                                        onClick = { if (!state.isAnswered) viewModel.onIntent(GameIntent.SelectOption(option)) }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-            } else if (state.error != null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    org.mohanned.rawdatyci_cdapp.presentation.components.EmptyState(
-                        title = "خطأ في التحميل",
-                        subtitle = state.error!!,
-                        icon = Icons.Default.Close,
-                        actionText = "إعادة المحاولة",
-                        onAction = { viewModel.onIntent(GameIntent.Start(gameType, childId)) }
-                    )
-                }
-            } else if (state.currentQuestion != null) {
-                GamePlayContent(
-                    modifier = Modifier.padding(padding),
-                    question = state.currentQuestion!!,
-                    currentIndex = state.currentIndex,
-                    totalQuestions = state.totalQuestions,
-                    selectedOption = state.selectedOption,
-                    isAnswered = state.isAnswered,
-                    isCorrect = state.isCorrect,
-                    onOptionSelected = { viewModel.onIntent(GameIntent.SelectOption(it)) },
-                    onCheckAnswer = { viewModel.onIntent(GameIntent.CheckAnswer) },
-                    onNextQuestion = { viewModel.onIntent(GameIntent.NextQuestion) }
-                )
             }
         }
     }
 }
 
 @Composable
-fun GamePlayContent(
-    modifier: Modifier = Modifier,
-    question: GameQuestion,
-    currentIndex: Int,
-    totalQuestions: Int,
-    selectedOption: String?,
-    isAnswered: Boolean,
-    isCorrect: Boolean,
-    onOptionSelected: (String) -> Unit,
-    onCheckAnswer: () -> Unit,
-    onNextQuestion: () -> Unit
-) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+private fun OptionItem(text: String, isSelected: Boolean, isAnswered: Boolean, isCorrect: Boolean, onClick: () -> Unit) {
+    val borderColor = when {
+        isAnswered && isCorrect -> ColorSuccess
+        isAnswered && isSelected && !isCorrect -> ColorError
+        isSelected -> BluePrimary
+        else -> Gray200
+    }
+    
+    val bgColor = when {
+        isAnswered && isCorrect -> ColorSuccess.copy(0.1f)
+        isAnswered && isSelected && !isCorrect -> ColorError.copy(0.1f)
+        isSelected -> BluePrimary.copy(0.1f)
+        else -> White
+    }
+
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(64.dp),
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(2.dp, borderColor),
+        color = bgColor
     ) {
-        // Progress
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("السؤال ${currentIndex + 1} من $totalQuestions", fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold, color = Gray500)
-            Spacer(Modifier.height(8.dp))
-            LinearProgressIndicator(
-                progress = { (currentIndex + 1).toFloat() / totalQuestions },
-                modifier = Modifier.fillMaxWidth().height(10.dp).clip(CircleShape),
-                color = BluePrimary,
-                trackColor = Gray200
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text, 
+                fontWeight = FontWeight.Bold, 
+                fontSize = 18.sp, 
+                fontFamily = CairoFontFamily, 
+                color = if (isAnswered && isCorrect) ColorSuccess else if (isAnswered && isSelected) ColorError else Color.Black
             )
         }
+    }
+}
 
-        // Question Card
-        RawdatyCard(containerColor = White, elevation = 4.dp, shape = RoundedCornerShape(32.dp)) {
-            Column(
-                modifier = Modifier.padding(24.dp).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(question.questionText, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontFamily = CairoFontFamily, color = BlueDark)
-                
-                // If question has image logic could go here
-                Box(Modifier.size(140.dp).background(BlueLight.copy(0.3f), CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Star, null, tint = AmberPrimary, modifier = Modifier.size(80.dp))
-                }
-            }
-        }
-
-        // Options
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            question.options.forEach { option ->
-                val isSelected = selectedOption == option
-                val color = if (isAnswered) {
-                    if (option == question.correctAnswer) ColorSuccess
-                    else if (isSelected) ColorError
-                    else Gray100
-                } else {
-                    if (isSelected) BluePrimary else White
-                }
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(20.dp))
-                        .clickable(enabled = !isAnswered) { onOptionSelected(option) },
-                    color = if (isAnswered) {
-                        if (option == question.correctAnswer) ColorSuccess.copy(0.1f)
-                        else if (isSelected) ColorError.copy(0.1f)
-                        else White
-                    } else if (isSelected) BluePrimary.copy(0.1f) else White,
-                    border = BorderStroke(2.dp, color),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Row(modifier = Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(option, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 18.sp, fontFamily = CairoFontFamily, color = if (isSelected || (isAnswered && option == question.correctAnswer)) color else Gray700)
-                        if (isAnswered) {
-                            if (option == question.correctAnswer) Icon(Icons.Default.Check, null, tint = ColorSuccess)
-                            else if (isSelected) Icon(Icons.Default.Close, null, tint = ColorError)
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        // Action Button
-        RawdatyButton(
-            text = if (isAnswered) (if (currentIndex + 1 == totalQuestions) "عرض النتيجة" else "السؤال التالي") else "تأكيد الإجابة",
-            onClick = { if (isAnswered) onNextQuestion() else onCheckAnswer() },
-            enabled = selectedOption != null,
-            modifier = Modifier.fillMaxWidth().height(60.dp),
-            backgroundColor = if (isAnswered) MintPrimary else BluePrimary
+@Composable
+private fun FeedbackSection(isCorrect: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            if (isCorrect) Icons.Default.Check else Icons.Default.Close,
+            null,
+            tint = if (isCorrect) ColorSuccess else ColorError
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            if (isCorrect) "أحسنت! إجابة صحيحة" else "للأسف، إجابة خاطئة",
+            color = if (isCorrect) ColorSuccess else ColorError,
+            fontWeight = FontWeight.Bold,
+            fontFamily = CairoFontFamily
         )
     }
 }

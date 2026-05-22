@@ -4,9 +4,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.BaseResponse
 
 sealed class ApiResponse<out T> {
@@ -28,6 +26,11 @@ suspend inline fun <reified T> safeApiCall(
     return try {
         val response: HttpResponse = call()
         val rawBody: String = response.bodyAsText()
+        val url = response.request.url.toString()
+
+        // طباعة الـ Response للتتبع
+        println("🚀 API_LOG [URL]: $url")
+        println("📥 API_LOG [BODY]: $rawBody")
 
         if (response.status.isSuccess()) {
             try {
@@ -49,18 +52,35 @@ suspend inline fun <reified T> safeApiCall(
         } else {
             var errorMessage = "Unknown Error"
             var errorCode: String? = null
+            
+            println("❌ API_LOG [ERROR CODE]: ${response.status.value}")
+
             try {
                 val obj = sharedJson.decodeFromString<JsonObject>(rawBody)
-                errorMessage = obj["message"]?.jsonPrimitive?.content ?: response.status.description
-                errorCode = obj["error"]?.jsonPrimitive?.content
+                errorMessage = obj["message"]?.jsonPrimitive?.content 
+                    ?: obj["error"]?.jsonPrimitive?.content
+                    ?: obj["detail"]?.let { detail ->
+                        if (detail is JsonArray) {
+                            detail.joinToString(", ") { 
+                                val loc = it.jsonObject["loc"]?.jsonArray?.joinToString(".") ?: ""
+                                val msg = it.jsonObject["msg"]?.jsonPrimitive?.content ?: ""
+                                "[$loc]: $msg"
+                            }
+                        } else detail.jsonPrimitive.content
+                    }
+                    ?: response.status.description
+                
+                errorCode = obj["error_code"]?.jsonPrimitive?.content
             } catch (_: Exception) {
                 errorMessage = if (rawBody.isNotBlank() && rawBody.length < 500) rawBody else response.status.description
             }
             ApiResponse.Error(response.status.value, errorMessage, errorCode)
         }
     } catch (e: HttpRequestTimeoutException) {
+        println("⚠️ API_LOG [TIMEOUT]")
         ApiResponse.NetworkError("Timeout")
     } catch (e: Exception) {
+        println("⚠️ API_LOG [EXCEPTION]: ${e.message}")
         ApiResponse.NetworkError(e.message ?: "Network Error")
     }
 }

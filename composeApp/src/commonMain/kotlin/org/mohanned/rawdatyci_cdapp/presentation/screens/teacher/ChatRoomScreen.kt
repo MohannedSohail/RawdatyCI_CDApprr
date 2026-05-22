@@ -1,7 +1,6 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.teacher
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +23,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.viewmodel.koinViewModel
-import org.mohanned.rawdatyci_cdapp.core.util.UiState
 import org.mohanned.rawdatyci_cdapp.domain.model.Message
 import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyAvatar
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
@@ -131,7 +128,7 @@ fun ChatRoomScreenContent(
                     state = listState,
                     reverseLayout = true
                 ) {
-                    items(messages.reversed(), key = { it.id }) { msg ->
+                    items(messages.asReversed(), key = { it.id }) { msg ->
                         ChatBubble(message = msg, isMe = msg.senderId == "me" || msg.senderName == "me")
                     }
                 }

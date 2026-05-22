@@ -13,7 +13,7 @@ class ComplaintsRepositoryImpl(
 ) : ComplaintsRepository {
     override suspend fun getComplaints(status: String?, type: String?, page: Int): ApiResponse<PaginatedResult<Complaint>> {
         return try {
-            val response = api.getComplaints(type, page)
+            val response = api.getComplaints(type, status, page)
             if (response is ApiResponse.Success) {
                 ApiResponse.Success(response.data.toPaginated { it.toDomain() })
             } else {
@@ -39,7 +39,7 @@ class ComplaintsRepositoryImpl(
 
     override suspend fun createComplaint(content: String, type: String): ApiResponse<Complaint> {
         return try {
-            val response = api.submitComplaint("", content, type)
+            val response = api.submitComplaint(content, type)
             if (response is ApiResponse.Success) {
                 ApiResponse.Success(response.data.toDomain())
             } else {

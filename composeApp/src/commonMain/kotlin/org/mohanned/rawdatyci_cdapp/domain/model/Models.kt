@@ -2,7 +2,7 @@ package org.mohanned.rawdatyci_cdapp.domain.model
 
 enum class UserRole { SUPER_ADMIN, ADMIN, TEACHER, PARENT }
 enum class AttendanceStatus { PRESENT, ABSENT, LATE, EXCUSED }
-enum class GameType { LETTERS, NUMBERS, COLORS }
+enum class GameType { LETTERS, NUMBERS, COLORS, ANIMALS, FRUITS }
 enum class ComplaintStatus { PENDING, IN_REVIEW, RESOLVED }
 enum class NewsType { NEWS, ANNOUNCEMENT, SLIDER }
 enum class SyncStatus { SYNCING, SYNCED, PENDING }
@@ -41,6 +41,7 @@ data class User(
     val classId: String?,
     val className: String?,
     val createdAt: String,
+    val children: List<Child>? = null
 )
 
 data class Classroom(
@@ -54,6 +55,7 @@ data class Classroom(
     val academicYear: String,
     val isActive: Boolean,
     val createdAt: String,
+    val children: List<Child>? = null // إضافة الطلاب للفصل الدراسي
 )
 
 data class Child(

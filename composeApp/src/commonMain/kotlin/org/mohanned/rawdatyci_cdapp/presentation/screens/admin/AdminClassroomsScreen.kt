@@ -1,19 +1,15 @@
 package org.mohanned.rawdatyci_cdapp.presentation.screens.admin
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import cafe.adriel.voyager.core.screen.Screen
@@ -63,7 +59,7 @@ fun AdminClassroomsScreenContent(
     onIntent: (ClassroomsIntent) -> Unit,
     onClassClick: (Classroom) -> Unit,
     onAdd: () -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
 ) {
     val listState = rememberLazyListState()
 
@@ -92,68 +88,59 @@ fun AdminClassroomsScreenContent(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Surface(
-                color = White,
-                shadowElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(modifier = Modifier.padding(16.dp)) {
-                    OutlinedTextField(
-                        value = state.query,
-                        onValueChange = { onIntent(ClassroomsIntent.Search(it)) },
-                        placeholder = { Text("ابحث عن اسم الفصل...", fontFamily = CairoFontFamily, color = Gray400) },
-                        leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BluePrimary,
-                            unfocusedBorderColor = Gray200,
-                            focusedContainerColor = Gray50,
-                            unfocusedContainerColor = Gray50
-                        )
-                    )
-                }
-            }
+//            Surface(
+//                color = White,
+//                shadowElevation = 2.dp,
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+//                    OutlinedTextField(
+//                        value = state.query,
+//                        onValueChange = { onIntent(ClassroomsIntent.Search(it)) },
+//                        placeholder = { Text("ابحث عن اسم الفصل...", fontFamily = CairoFontFamily, color = Gray400) },
+//                        leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
+//                        modifier = Modifier.fillMaxWidth(),
+//                        shape = RoundedCornerShape(16.dp),
+//                        singleLine = true,
+//                        textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily),
+//                        colors = OutlinedTextFieldDefaults.colors(
+//                            focusedBorderColor = BluePrimary,
+//                            unfocusedBorderColor = Gray200,
+//                            focusedContainerColor = Gray50,
+//                            unfocusedContainerColor = Gray50
+//                        )
+//                    )
+//                }
+//            }
 
-            if (state.isLoading) {
+            if (state.isLoading && state.classrooms.isEmpty()) {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(6) {
-                        ShimmerBox(Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(16.dp)))
-                    }
+                    items(6) { ShimmerBox(Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(22.dp))) }
                 }
             } else if (state.classrooms.isEmpty()) {
                 EmptyState(
                     icon = Icons.Default.Class,
-                    title = if (state.error != null) "خطأ في التحميل" else "لا توجد فصول حالياً",
-                    subtitle = state.error ?: "ابدأ بإضافة فصول دراسية لتوزيع الطلاب والمعلمات عليها",
-                    actionText = if (state.error != null) "إعادة المحاولة" else "إضافة فصل دراسي",
-                    onAction = { if (state.error != null) onIntent(ClassroomsIntent.Load) else onAdd() }
+                    title = "لا توجد فصول حالياً",
+                    subtitle = "ابدأ بإضافة فصول دراسية لتوزيع الطلاب والمعلمات عليها",
+                    actionText = "تحديث",
+                    onAction = { onIntent(ClassroomsIntent.Load) }
                 )
             } else {
-                LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(state.classrooms, key = { it.id }) { classroom ->
-                        ClassroomCard(
-                            classroom = classroom,
-                            onClick = { onClassClick(classroom) },
-                            onDelete = { onIntent(ClassroomsIntent.DeleteRequest(classroom.id)) }
-                        )
-                    }
-
-                    if (state.isLoadingMore) {
-                        item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = BluePrimary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
-                            }
+                AnimateEntrance {
+                    LazyColumn(
+                        state = listState,
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(state.classrooms, key = { it.id }) { classroom ->
+                            ClassroomCard(
+                                classroom = classroom,
+                                onClick = { onClassClick(classroom) },
+                                onDelete = { onIntent(ClassroomsIntent.DeleteRequest(classroom.id)) }
+                            )
                         }
                     }
-                    item { Spacer(Modifier.height(80.dp)) }
                 }
             }
         }
@@ -169,17 +156,20 @@ private fun ClassroomCard(
     RawdatyCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        elevation = 2.dp
+        elevation = 3.dp,
+        containerColor = White,
+        shape = RoundedCornerShape(24.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(16.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(18.dp), modifier = Modifier.padding(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // أيقونة الفصل المصممة
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(16.dp))
                         .background(BlueLight.copy(0.4f)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -187,35 +177,41 @@ private fun ClassroomCard(
                         Icons.Default.School,
                         null,
                         tint = BluePrimary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
 
                 Column(Modifier.weight(1f)) {
                     Text(
-                        classroom.name,
+                        text = classroom.name,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Gray900,
                         fontFamily = CairoFontFamily
                     )
-                    Text(
-                        if (classroom.teacherName != null) "المعلمة: ${classroom.teacherName}" else "لم يتم تعيين معلمة",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (classroom.teacherName != null) Gray500 else AmberPrimary,
-                        fontFamily = CairoFontFamily
-                    )
+                    Spacer(Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Person, null, tint = if (classroom.teacherName != null) Gray400 else AmberPrimary, modifier = Modifier.size(12.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = classroom.teacherName ?: "لم يتم تعيين معلمة",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (classroom.teacherName != null) Gray500 else AmberPrimary,
+                            fontFamily = CairoFontFamily
+                        )
+                    }
                 }
 
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.background(Gray50, CircleShape).size(32.dp)
+                    modifier = Modifier.size(32.dp).background(ColorError.copy(0.05f), CircleShape)
                 ) {
                     Icon(Icons.Default.DeleteOutline, null, tint = ColorError.copy(0.8f), modifier = Modifier.size(18.dp))
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // قسم إحصائية الطلاب
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 val capacity = classroom.capacity ?: 25
                 val progress = if (capacity > 0) classroom.childrenCount.toFloat() / capacity else 0f
                 val progressColor = when {
@@ -233,7 +229,7 @@ private fun ClassroomCard(
                         Icon(Icons.Default.Groups, null, tint = progressColor, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            "الطلاب: ${classroom.childrenCount} من $capacity",
+                            text = "الطلاب: ${classroom.childrenCount} من $capacity",
                             style = MaterialTheme.typography.labelSmall,
                             color = Gray700,
                             fontWeight = FontWeight.Bold,
@@ -241,7 +237,7 @@ private fun ClassroomCard(
                         )
                     }
                     Text(
-                        "${(progress * 100).toInt()}%",
+                        text = "${(progress * 100).toInt()}%",
                         style = MaterialTheme.typography.labelSmall,
                         color = progressColor,
                         fontWeight = FontWeight.Black,
@@ -251,7 +247,7 @@ private fun ClassroomCard(
 
                 LinearProgressIndicator(
                     progress = { progress.coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
                     color = progressColor,
                     trackColor = Gray100
                 )

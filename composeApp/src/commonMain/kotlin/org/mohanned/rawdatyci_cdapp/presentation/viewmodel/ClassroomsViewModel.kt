@@ -10,6 +10,7 @@ import org.mohanned.rawdatyci_cdapp.domain.model.Child
 import org.mohanned.rawdatyci_cdapp.domain.model.Classroom
 import org.mohanned.rawdatyci_cdapp.domain.model.User
 import org.mohanned.rawdatyci_cdapp.domain.usecase.classroom.*
+import org.mohanned.rawdatyci_cdapp.domain.usecase.child.GetChildrenByClassUseCase
 import org.mohanned.rawdatyci_cdapp.domain.usecase.user.GetUsersUseCase
 
 data class ClassroomsState(
@@ -58,7 +59,8 @@ class ClassroomsViewModel(
     private val createClassUseCase: CreateClassUseCase,
     private val updateClassUseCase: UpdateClassUseCase,
     private val deleteClassUseCase: DeleteClassUseCase,
-    private val getTeachersUseCase: GetUsersUseCase
+    private val getTeachersUseCase: GetUsersUseCase,
+    private val getChildrenByClassUseCase: GetChildrenByClassUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ClassroomsState())
@@ -90,9 +92,9 @@ class ClassroomsViewModel(
 
     private fun loadClassrooms() {
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
             getClassesUseCase(page = 1).collect { uiState ->
                 when (uiState) {
-                    is UiState.Loading -> _state.update { it.copy(isLoading = true) }
                     is UiState.Success -> {
                         _state.update { 
                             it.copy(
@@ -103,11 +105,16 @@ class ClassroomsViewModel(
                                 isLoading = false
                             )
                         }
-                        loadTeachers()
                     }
-                    is UiState.Error -> _state.update { 
-                        it.copy(error = uiState.message, isLoading = false) 
+                    is UiState.Error -> {
+                        _state.update { 
+                            it.copy(
+                                error = uiState.message, 
+                                isLoading = false 
+                            ) 
+                        }
                     }
+                    else -> {}
                 }
             }
         }
@@ -201,21 +208,40 @@ class ClassroomsViewModel(
 
     private fun loadClassDetail(classId: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+            _state.update { it.copy(isLoading = true, currentClass = null, children = emptyList()) }
+            
             getClassByIdUseCase(classId).collect { uiState ->
                 when (uiState) {
                     is UiState.Success -> {
                         _state.update { 
                             it.copy(
                                 currentClass = uiState.data,
-                                isLoading = false
-                            )
+                                // استخدام الطلاب القادمين مع كائن الفصل مباشرة
+                                children = uiState.data.children ?: emptyList(),
+                                isLoading = false 
+                            ) 
                         }
                     }
-                    is UiState.Error -> _state.update { 
-                        it.copy(error = uiState.message, isLoading = false) 
+                    is UiState.Error -> {
+                        _state.update { it.copy(error = uiState.message, isLoading = false) }
                     }
-                    else -> { }
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    private fun loadChildren(classId: String) {
+        viewModelScope.launch {
+            getChildrenByClassUseCase(classId).collect { uiState ->
+                when (uiState) {
+                    is UiState.Success -> {
+                        _state.update { it.copy(children = uiState.data.items, isLoading = false) }
+                    }
+                    is UiState.Error -> {
+                        _state.update { it.copy(error = uiState.message, isLoading = false) }
+                    }
+                    else -> {}
                 }
             }
         }

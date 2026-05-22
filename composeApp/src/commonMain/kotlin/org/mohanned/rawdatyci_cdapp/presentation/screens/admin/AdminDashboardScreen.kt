@@ -2,7 +2,6 @@ package org.mohanned.rawdatyci_cdapp.presentation.screens.admin
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -27,7 +26,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.domain.model.News
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
-import org.mohanned.rawdatyci_cdapp.presentation.screens.auth.LoginScreen
+import org.mohanned.rawdatyci_cdapp.presentation.screens.auth.UserTypeSelectScreen
+import org.mohanned.rawdatyci_cdapp.presentation.screens.shared.ProfileScreenContent
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.*
 
@@ -47,7 +47,7 @@ object AdminDashboardScreen : Screen {
         LaunchedEffect(Unit) {
             viewModel.effect.collect { effect ->
                 when (effect) {
-                    DashboardEffect.NavigateToLogin -> navigator.replaceAll(LoginScreen())
+                    DashboardEffect.NavigateToLogin -> navigator.replaceAll(UserTypeSelectScreen)
                     is DashboardEffect.ShowMessage -> snackbarHostState.showSnackbar(effect.message)
                 }
             }
@@ -57,17 +57,12 @@ object AdminDashboardScreen : Screen {
             BottomNavItem("الرئيسية", Icons.Outlined.GridView, Icons.Filled.GridView),
             BottomNavItem("الفصول", Icons.Outlined.Groups, Icons.Filled.Groups),
             BottomNavItem("المستخدمين", Icons.Outlined.PersonAdd, Icons.Filled.PersonAdd),
-            BottomNavItem("الإعدادات", Icons.Outlined.Settings, Icons.Filled.Settings)
+            BottomNavItem("الملف الشخصي", Icons.Outlined.Person, Icons.Filled.Person)
         )
 
         Scaffold(
             containerColor = AppBg,
-            contentWindowInsets = WindowInsets(
-                0,
-                0,
-                0,
-                0
-            ), // للسماح للهيدر بالوصول للأعلى بدون فواصل بيضاء
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 RawdatyBottomNav(
                     items = navItems,
@@ -96,12 +91,9 @@ object AdminDashboardScreen : Screen {
                             }
                         }
                     )
-
                     1 -> AdminClassroomsContentWrapper()
                     2 -> AdminUsersContentWrapper()
-                    3 -> AdminSettingsScreenContentWrapper(
-                        onLogout = { viewModel.onIntent(DashboardIntent.Logout) }
-                    )
+                    3 -> ProfileScreenContent(onBack = null)
                 }
             }
         }
@@ -158,7 +150,7 @@ private fun AdminClassroomsContentWrapper() {
         onIntent = viewModel::onIntent,
         onClassClick = { navigator.push(AdminClassDetailScreen(it.id)) },
         onAdd = { navigator.push(AdminAddClassroomScreen(null)) },
-        onBack = { /* التبويبات لا تحتاج زر رجوع */ }
+        onBack = null
     )
 }
 
@@ -174,34 +166,15 @@ private fun AdminUsersContentWrapper() {
 
     AdminUsersScreenContent(
         state = state,
-        initialRole = null, // هنا نمرر الـ role لكي يتم تحديد التبويب (Tab) الصحيح
+        initialRole = null,
         onUserClick = { user -> navigator.push(AdminUserDetailsScreen(user.id)) },
         onDelete = { viewModel.onIntent(UsersIntent.DeleteUser(it.id)) },
         onAdd = { navigator.push(AdminAddEditUserScreen(null)) },
-        onBack = { /* التبويبات لا تحتاج زر رجوع */ },
+        onBack = null,
         onRefresh = { viewModel.onIntent(UsersIntent.LoadUsers()) },
         onSearch = { q -> viewModel.onIntent(UsersIntent.LoadUsers(search = q)) },
         onTabChanged = { role -> viewModel.onIntent(UsersIntent.LoadUsers(role = role)) },
         onLoadMore = { viewModel.onIntent(UsersIntent.LoadUsers(page = state.page + 1)) }
-    )
-}
-
-@Composable
-private fun AdminSettingsScreenContentWrapper(onLogout: () -> Unit) {
-    val viewModel: SettingsViewModel = koinViewModel()
-    val state by viewModel.state.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.onIntent(SettingsIntent.Load)
-    }
-
-    AdminSettingsScreenContent(
-        state = state,
-        onKindergartenNameChange = { viewModel.onIntent(SettingsIntent.KindergartenNameChanged(it)) },
-        onAddressChange = { viewModel.onIntent(SettingsIntent.AddressChanged(it)) },
-        onPhoneChange = { viewModel.onIntent(SettingsIntent.PhoneChanged(it)) },
-        onSave = { viewModel.onIntent(SettingsIntent.Save) },
-        onBack = { /* التبويبات لا تحتاج زر رجوع */ }
     )
 }
 
@@ -215,7 +188,6 @@ fun AdminDashboardHomeContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // الهيدر مع دعم RTL وإزالة الفراغات البيضاء
         Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
             WaveHeader(
                 title = "لوحة التحكم",
@@ -331,24 +303,6 @@ fun AdminDashboardHomeContent(
                     }
                 }
 
-//                Row(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    SectionHeader(
-//                        "آخر الأخبار",
-//                        actionText = "عرض الكل",
-//                        onSeeAll = { onQuickAction("التعميمات") })
-//                    AnimateEntrance(delay = 500) {
-//                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-//                            state.recentNews.take(3).forEach { item ->
-//                                RecentNewsItem(item) { onQuickAction("التعميمات") }
-//                            }
-//                        }
-//                    }
-//                }
-
                 if (state.isLoading) {
                     Box(
                         Modifier.fillMaxWidth().height(150.dp),
@@ -393,87 +347,6 @@ fun EmptyStateCard(text: String) {
         Text(text, color = Gray400, fontFamily = CairoFontFamily)
     }
 }
-
-@Composable
-fun DashboardNewsItem(news: News) {
-    RawdatyCard(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        onClick = {}
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp)).background(Gray100),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Newspaper, null, tint = BluePrimary)
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    news.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = CairoFontFamily,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    news.body,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Gray500,
-                    fontFamily = CairoFontFamily,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null, tint = Gray300)
-        }
-    }
-}
-
-//@Composable
-//fun StatCard(
-//    label: String,
-//    value: String,
-//    icon: ImageVector,
-//    color: Color,
-//    gradient: androidx.compose.ui.graphics.Brush,
-//    modifier: Modifier = Modifier,
-//    onClick: () -> Unit
-//) {
-//    RawdatyCard(onClick = onClick, modifier = modifier) {
-//        Row(
-//            modifier = Modifier.padding(16.dp),
-//            verticalAlignment = Alignment.CenterVertically,
-//            horizontalArrangement = Arrangement.SpaceBetween
-//        ) {
-//            Column(Modifier.weight(1f)) {
-//                Text(
-//                    value,
-//                    style = MaterialTheme.typography.headlineMedium,
-//                    fontWeight = FontWeight.Black,
-//                    color = Gray900,
-//                    fontFamily = CairoFontFamily
-//                )
-//                Text(
-//                    label,
-//                    style = MaterialTheme.typography.labelSmall,
-//                    color = Gray500,
-//                    fontFamily = CairoFontFamily
-//                )
-//            }
-//            Box(
-//                modifier = Modifier.size(40.dp).clip(CircleShape).background(gradient),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Icon(icon, null, tint = White, modifier = Modifier.size(20.dp))
-//            }
-//        }
-//    }
-//}
 
 @Composable
 private fun RecentNewsItem(news: News, onClick: () -> Unit) {

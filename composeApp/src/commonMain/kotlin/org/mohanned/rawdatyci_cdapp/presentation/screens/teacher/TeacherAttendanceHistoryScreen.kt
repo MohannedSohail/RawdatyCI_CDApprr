@@ -4,9 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,17 +24,13 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.viewmodel.koinViewModel
-import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceStatus
 import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceSummary
-import org.mohanned.rawdatyci_cdapp.presentation.components.EmptyState
-import org.mohanned.rawdatyci_cdapp.presentation.components.GlassHeader
-import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyCard
-import org.mohanned.rawdatyci_cdapp.presentation.components.ShimmerBox
+import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.AttendanceIntent
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.AttendanceViewModel
 
-data class TeacherAttendanceHistoryScreen(val classId: String) : Screen {
+data class TeacherAttendanceHistoryScreen(val classId: String, val className: String) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
@@ -38,43 +38,68 @@ data class TeacherAttendanceHistoryScreen(val classId: String) : Screen {
         val state by viewModel.state.collectAsState()
 
         LaunchedEffect(classId) {
-            viewModel.onIntent(AttendanceIntent.LoadMonthlyReport("5", classId))
+            viewModel.onIntent(AttendanceIntent.LoadWeeklyReport(classId))
+            viewModel.onIntent(AttendanceIntent.LoadMonthlyReport("current", classId))
         }
 
         Scaffold(
-            containerColor = AppBg,
             topBar = {
-                GlassHeader(
-                    title = "سجل غياب الفصل",
+                ModernHeader(
+                    title = "سجل الحضور",
+                    subtitle = className,
                     onBack = { navigator.pop() },
                     gradient = RawdatyGradients.Primary,
                     headerHeight = 140.dp
                 )
-            }
+            },
+            containerColor = AppBg
         ) { padding ->
-            if (state.isLoading) {
-                LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
-                    items(5) { ShimmerBox(Modifier.fillMaxWidth().height(100.dp).padding(vertical = 8.dp).clip(RoundedCornerShape(16.dp))) }
-                }
-            } else if (state.attendanceRecords.isEmpty()) { // Assuming attendanceRecords used for summary list
-                EmptyState(title = "لا يوجد سجلات غياب لهذا الشهر", icon = Icons.Default.History)
-            } else {
-                LazyColumn(
-                    modifier = Modifier.padding(padding).fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Logic to display history items
-                    // This is a placeholder since the ViewModel state for summaries might need adjustment
-                    // but following the logic of providing a full implementation:
-                    items(state.attendanceRecords) { record ->
-                         RawdatyCard(containerColor = White) {
-                            Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Column {
-                                    Text(record.date, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily)
-                                    Text(record.childName, style = MaterialTheme.typography.bodySmall, color = Gray500, fontFamily = CairoFontFamily)
-                                }
-                                StatusBadge(record.status)
+            Box(Modifier.padding(padding).fillMaxSize()) {
+                if (state.isLoading && state.weeklySummaries.isEmpty()) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BluePrimary)
+                    }
+                } else if (state.error != null && state.weeklySummaries.isEmpty()) {
+                    ErrorState(message = state.error!!, onRetry = { 
+                        viewModel.onIntent(AttendanceIntent.LoadWeeklyReport(classId))
+                    })
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        item {
+                            StatCard(
+                                label = "نسبة الحضور لهذا الشهر",
+                                value = "${(state.attendanceRate * 100).toInt()}%",
+                                icon = Icons.Default.PieChart,
+                                color = BluePrimary
+                            )
+                        }
+
+                        item {
+                            Text(
+                                "حضور الأسبوع الحالي",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = BlueDark,
+                                fontFamily = CairoFontFamily,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+
+                        if (state.weeklySummaries.isEmpty()) {
+                            item {
+                                EmptyState(
+                                    title = "لا توجد سجلات",
+                                    subtitle = "لم يتم تسجيل حضور لأي يوم في هذا الأسبوع بعد.",
+                                    icon = Icons.Default.CalendarMonth
+                                )
+                            }
+                        } else {
+                            items(state.weeklySummaries) { summary ->
+                                AttendanceSummaryItem(summary)
                             }
                         }
                     }
@@ -85,14 +110,58 @@ data class TeacherAttendanceHistoryScreen(val classId: String) : Screen {
 }
 
 @Composable
-private fun StatusBadge(status: AttendanceStatus) {
-    val (label, color) = when (status) {
-        AttendanceStatus.PRESENT -> "حاضر" to ColorSuccess
-        AttendanceStatus.ABSENT -> "غائب" to ColorError
-        AttendanceStatus.LATE -> "متأخر" to AmberPrimary
-        AttendanceStatus.EXCUSED -> "بعذر" to BluePrimary
-    }
-    Surface(color = color.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp)) {
-        Text(label, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), color = color, fontWeight = FontWeight.Bold, fontSize = 12.sp, fontFamily = CairoFontFamily)
+fun AttendanceSummaryItem(summary: AttendanceSummary) {
+    RawdatyCard(
+        containerColor = White,
+        elevation = 2.dp,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MintPrimary.copy(0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.CheckCircle, null, tint = MintPrimary)
+            }
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = summary.date,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Gray900,
+                    fontFamily = CairoFontFamily
+                )
+                Text(
+                    text = "${summary.present} حاضر • ${summary.absent} غائب • ${summary.late} متأخر",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Gray500,
+                    fontFamily = CairoFontFamily
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${(summary.presentPct * 100).toInt()}%",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    color = BluePrimary,
+                    fontFamily = CairoFontFamily
+                )
+                Text(
+                    text = "نسبة الحضور",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Gray400,
+                    fontFamily = CairoFontFamily
+                )
+            }
+        }
     }
 }

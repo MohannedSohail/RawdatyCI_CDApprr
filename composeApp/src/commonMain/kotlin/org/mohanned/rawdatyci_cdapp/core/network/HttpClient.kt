@@ -16,7 +16,7 @@ fun buildHttpClient(tokenManager: TokenManager): HttpClient = HttpClient {
         json(Json {
             ignoreUnknownKeys = true
             isLenient = true
-            encodeDefaults = true
+            encodeDefaults = false
         })
     }
     install(Logging) {
@@ -24,8 +24,9 @@ fun buildHttpClient(tokenManager: TokenManager): HttpClient = HttpClient {
     }
     install(HttpTimeout) {
         requestTimeoutMillis = 30_000
+        connectTimeoutMillis = 30_000
     }
-    
+
     install(Auth) {
         bearer {
             loadTokens {
@@ -33,23 +34,46 @@ fun buildHttpClient(tokenManager: TokenManager): HttpClient = HttpClient {
             }
             refreshTokens { null }
             sendWithoutRequest { request ->
-                // إرسال التوكين في كل الطلبات ما عدا المسارات التالية
                 val path = request.url.encodedPath
-                !(path.contains("/auth/login") || 
-                  path.contains("/branding") || 
-                  path.contains("/auth/forgot-password"))
+                // نرسل بدون Token فقط للمسارات العامة
+                path.contains("/auth/") || path.contains("/branding")
             }
         }
     }
-    
+
+    // مراقبة الاستجابة للتعامل مع انتهاء صلاحية الـ Token (401)
+    HttpResponseValidator {
+        validateResponse { response ->
+            if (response.status == HttpStatusCode.Unauthorized) {
+                // استلام 401 يعني أن الـ Token انتهى أو غير صالح
+                // نقوم بتفريغ كافة البيانات المسجلة فوراً
+                tokenManager.logout()
+            }
+        }
+    }
+
     defaultRequest {
         url(ApiConfig.BASE_URL)
+        header(HttpHeaders.Accept, "application/json")
         header("Accept-Language", "ar")
     }
 }.apply {
     plugin(HttpSend).intercept { request ->
+        // إضافة Tenant Slug لكل الطلبات
         val tenant = tokenManager.getTenantSlug()
-        request.header("X-Tenant-Slug", tenant)
+        if (tenant.isNotEmpty()) {
+            request.header("X-Tenant-Slug", tenant)
+        }
+
+        // كإجراء أمان إضافي للطلبات المحمية
+        if (!request.url.encodedPath.contains("/auth/") && !request.url.encodedPath.contains("/branding")) {
+            tokenManager.getAccessToken()?.let { token ->
+                if (!request.headers.contains(HttpHeaders.Authorization)) {
+                    request.header(HttpHeaders.Authorization, "Bearer $token")
+                }
+            }
+        }
+
         execute(request)
     }
 }

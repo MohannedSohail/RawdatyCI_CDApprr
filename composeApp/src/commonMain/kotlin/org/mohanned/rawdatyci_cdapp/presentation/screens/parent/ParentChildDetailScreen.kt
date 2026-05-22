@@ -49,24 +49,56 @@ data class ParentChildDetailScreen(val childId: String) : Screen {
             attendanceViewModel.onIntent(AttendanceIntent.LoadChildAttendance(childId))
         }
 
-        val child = childState.currentChild
-        
-        if (childState.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = BluePrimary)
+        Scaffold(
+            containerColor = AppBg,
+            topBar = {
+                GlassHeader(
+                    title = "ملف طفلي",
+                    onBack = { navigator.pop() },
+                    gradient = RawdatyGradients.HeroBlue,
+                    headerHeight = 140.dp
+                )
             }
-        } else if (child == null) {
-            EmptyState(title = "الطفل غير موجود", icon = Icons.Default.Error, actionText = "رجوع", onAction = { navigator.pop() })
-        } else {
-            ParentChildDetailScreenContent(
-                child = child,
-                attendanceRate = (attendanceState.attendanceRate * 100).toInt(),
-                onBack = { navigator.pop() },
-                onAttendanceClick = { /* Navigate to full history if needed */ },
-                onMessageTeacher = { 
-                    navigator.push(ChatRoomScreen(child.classId, child.className, child.fullName)) 
+        ) { padding ->
+            Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+                if (childState.isLoading) {
+                    // Shimmer for detail screen
+                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ShimmerBox(Modifier.size(100.dp).clip(CircleShape))
+                            Spacer(Modifier.width(16.dp))
+                            Column {
+                                ShimmerBox(Modifier.width(150.dp).height(24.dp).clip(RoundedCornerShape(8.dp)))
+                                Spacer(Modifier.height(8.dp))
+                                ShimmerBox(Modifier.width(100.dp).height(16.dp).clip(RoundedCornerShape(8.dp)))
+                            }
+                        }
+                        repeat(3) {
+                            ShimmerBox(Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(24.dp)))
+                        }
+                    }
+                } else {
+                    val child = childState.currentChild
+                    if (child == null) {
+                         EmptyState(title = "الطفل غير موجود", icon = Icons.Default.Error, actionText = "رجوع", onAction = { navigator.pop() })
+                    } else {
+                        ParentChildDetailScreenContent(
+                            child = child,
+                            attendanceRate = if (attendanceState.attendanceRecords.isNotEmpty()) {
+                                val present = attendanceState.attendanceRecords.count { it.status.name == "PRESENT" }
+                                ((present.toFloat() / attendanceState.attendanceRecords.size) * 100).toInt()
+                            } else 95, // Dummy default
+                            onBack = { navigator.pop() },
+                            onAttendanceClick = { 
+                                navigator.push(ParentAttendanceScreen(child.id, child.fullName))
+                            },
+                            onMessageTeacher = { 
+                                // navigator.push(ChatRoomScreen(child.classId, child.className, child.fullName)) 
+                            }
+                        )
+                    }
                 }
-            )
+            }
         }
     }
 }
@@ -82,77 +114,81 @@ fun ParentChildDetailScreenContent(
     var activeTab by remember { mutableStateOf(0) }
     val tabs = listOf("النمو والتعلم", "سجل الحضور", "طاقم الفصل")
 
-    Scaffold(
-        containerColor = AppBg,
-        topBar = {
-            GlassHeader(
-                title = "ملف طفلي",
-                onBack = onBack,
-                gradient = RawdatyGradients.HeroBlue,
-                headerHeight = 140.dp
-            )
-        }
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Surface(color = White, shadowElevation = 0.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(top = 24.dp, bottom = 12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Box {
-                        RawdatyAvatar(child.fullName, size = 100.dp, gradient = if (child.gender == "male") RawdatyGradients.AvatarBlue else RawdatyGradients.AvatarMint)
-                        Surface(
-                            modifier = Modifier.size(32.dp).align(Alignment.BottomEnd),
-                            color = MintPrimary, shape = CircleShape, border = BorderStroke(3.dp, White)
-                        ) {
-                            Icon(Icons.Default.Verified, null, tint = White, modifier = Modifier.padding(6.dp))
-                        }
-                    }
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(child.fullName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
-                        Surface(color = BlueLight.copy(0.4f), shape = RoundedCornerShape(8.dp)) {
-                            Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Icon(Icons.Default.School, null, tint = BluePrimary, modifier = Modifier.size(16.dp))
-                                Text(child.className, style = MaterialTheme.typography.labelMedium, color = BluePrimary, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily)
-                            }
-                        }
-                    }
-
-                    Surface(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp).fillMaxWidth(),
-                        color = Gray100, shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Row(modifier = Modifier.padding(4.dp)) {
-                            tabs.forEachIndexed { i, tab ->
-                                val isSelected = activeTab == i
-                                Box(
-                                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(if (isSelected) White else Color.Transparent)
-                                        .clickable { activeTab = i }.padding(vertical = 12.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(tab, style = MaterialTheme.typography.labelMedium, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, color = if (isSelected) BluePrimary else Gray500, fontFamily = CairoFontFamily)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+    Column(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            color = White, 
+            shadowElevation = 0.dp, 
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
+        ) {
             Column(
-                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                modifier = Modifier.padding(top = 16.dp, bottom = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                AnimatedContent(targetState = activeTab, label = "tab_content") { targetTab ->
-                    when (targetTab) {
-                        0 -> GrowthAndLearningTab(child)
-                        1 -> AttendanceTab(attendanceRate, onAttendanceClick)
-                        2 -> TeacherTab(onMessageTeacher)
+                Box {
+                    RawdatyAvatar(
+                        child.fullName, 
+                        size = 100.dp, 
+                        gradient = if (child.gender == "male") RawdatyGradients.AvatarBlue else RawdatyGradients.AvatarMint
+                    )
+                    Surface(
+                        modifier = Modifier.size(32.dp).align(Alignment.BottomEnd),
+                        color = MintPrimary, shape = CircleShape, border = BorderStroke(3.dp, White)
+                    ) {
+                        Icon(Icons.Default.Verified, null, tint = White, modifier = Modifier.padding(6.dp))
                     }
                 }
-                Spacer(Modifier.height(40.dp))
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(child.fullName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
+                    Surface(color = BlueLight.copy(0.4f), shape = RoundedCornerShape(8.dp)) {
+                        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Default.School, null, tint = BluePrimary, modifier = Modifier.size(16.dp))
+                            Text(child.className, style = MaterialTheme.typography.labelMedium, color = BluePrimary, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily)
+                        }
+                    }
+                }
+
+                Surface(
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp).fillMaxWidth(),
+                    color = Gray100, shape = RoundedCornerShape(16.dp)
+                ) {
+                    Row(modifier = Modifier.padding(4.dp)) {
+                        tabs.forEachIndexed { i, tab ->
+                            val isSelected = activeTab == i
+                            Box(
+                                modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) White else Color.Transparent)
+                                    .clickable { activeTab = i }.padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    tab, 
+                                    style = MaterialTheme.typography.labelMedium, 
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, 
+                                    color = if (isSelected) BluePrimary else Gray500, 
+                                    fontFamily = CairoFontFamily
+                                )
+                            }
+                        }
+                    }
+                }
             }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            AnimatedContent(targetState = activeTab, label = "tab_content") { targetTab ->
+                when (targetTab) {
+                    0 -> GrowthAndLearningTab(child)
+                    1 -> AttendanceTab(attendanceRate, onAttendanceClick)
+                    2 -> TeacherTab(onMessageTeacher)
+                }
+            }
+            Spacer(Modifier.height(40.dp))
         }
     }
 }
@@ -172,14 +208,23 @@ private fun GrowthAndLearningTab(child: Child) {
 
         SectionHeader("لوحة التميز")
         RawdatyCard(elevation = 1.dp, containerColor = White) {
-            Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(), 
+                horizontalArrangement = Arrangement.SpaceBetween, 
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("عدد النجوم", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
                     Text("تقييم المعلمة لهذا الأسبوع", style = MaterialTheme.typography.labelSmall, color = Gray500, fontFamily = CairoFontFamily)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     repeat(5) { i ->
-                        Icon(if (i < child.stars) Icons.Default.Stars else Icons.Outlined.StarOutline, null, tint = if (i < child.stars) AmberPrimary else Gray200, modifier = Modifier.size(32.dp))
+                        Icon(
+                            if (i < child.stars) Icons.Default.Stars else Icons.Outlined.StarOutline, 
+                            null, 
+                            tint = if (i < child.stars) AmberPrimary else Gray200, 
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
                 }
             }
@@ -188,7 +233,14 @@ private fun GrowthAndLearningTab(child: Child) {
         if (!child.notes.isNullOrBlank()) {
             SectionHeader("كلمة المعلمة")
             RawdatyCard(containerColor = White) {
-                Text(child.notes ?: "", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium, color = Gray700, lineHeight = 24.sp, fontFamily = CairoFontFamily)
+                Text(
+                    child.notes ?: "", 
+                    modifier = Modifier.padding(16.dp), 
+                    style = MaterialTheme.typography.bodyMedium, 
+                    color = Gray700, 
+                    lineHeight = 24.sp, 
+                    fontFamily = CairoFontFamily
+                )
             }
         }
     }
@@ -199,10 +251,30 @@ private fun AttendanceTab(attendanceRate: Int, onAttendanceClick: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         SectionHeader("ملخص الحضور")
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            StatCard(label = "نسبة الحضور", value = "$attendanceRate%", icon = Icons.Default.CheckCircle, color = MintPrimary, gradient = RawdatyGradients.AvatarMint, modifier = Modifier.weight(1f))
-            StatCard(label = "نسبة الغياب", value = "${100 - attendanceRate}%", icon = Icons.Default.Cancel, color = ColorError, gradient = RawdatyGradients.AvatarAmber, modifier = Modifier.weight(1f))
+            StatCard(
+                label = "نسبة الحضور", 
+                value = "$attendanceRate%", 
+                icon = Icons.Default.CheckCircle, 
+                color = MintPrimary, 
+                gradient = RawdatyGradients.AvatarMint, 
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                label = "نسبة الغياب", 
+                value = "${100 - attendanceRate}%", 
+                icon = Icons.Default.Cancel, 
+                color = ColorError, 
+                gradient = RawdatyGradients.AvatarAmber, 
+                modifier = Modifier.weight(1f)
+            )
         }
-        RawdatyButton(text = "عرض سجل الحضور الكامل", onClick = onAttendanceClick, icon = Icons.Outlined.CalendarMonth, backgroundColor = MintPrimary, modifier = Modifier.fillMaxWidth())
+        RawdatyButton(
+            text = "عرض سجل الحضور الكامل", 
+            onClick = onAttendanceClick, 
+            icon = Icons.Outlined.CalendarMonth, 
+            backgroundColor = MintPrimary, 
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -211,15 +283,25 @@ private fun TeacherTab(onMessageTeacher: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
         SectionHeader("معلمة الفصل")
         RawdatyCard(elevation = 1.dp, containerColor = White) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                RawdatyAvatar("سارة أحمد", size = 64.dp, gradient = RawdatyGradients.AvatarMint)
+            Row(
+                modifier = Modifier.padding(16.dp), 
+                verticalAlignment = Alignment.CenterVertically, 
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                RawdatyAvatar("أ. سارة أحمد", size = 64.dp, gradient = RawdatyGradients.AvatarMint)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("أ. سارة أحمد", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
                     Text("المعلمة المسؤولة عن الفصل", style = MaterialTheme.typography.bodySmall, color = Gray500, fontFamily = CairoFontFamily)
                 }
             }
         }
-        RawdatyButton(text = "بدء محادثة مع المعلمة", onClick = onMessageTeacher, icon = Icons.AutoMirrored.Filled.Chat, modifier = Modifier.fillMaxWidth(), backgroundColor = BluePrimary)
+        RawdatyButton(
+            text = "بدء محادثة مع المعلمة", 
+            onClick = onMessageTeacher, 
+            icon = Icons.AutoMirrored.Filled.Chat, 
+            modifier = Modifier.fillMaxWidth(), 
+            backgroundColor = BluePrimary
+        )
     }
 }
 
@@ -230,6 +312,11 @@ private fun ProgressItem(label: String, progress: Float, color: Color) {
             Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
             Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black, color = color, fontFamily = CairoFontFamily)
         }
-        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape), color = color, trackColor = Gray100)
+        LinearProgressIndicator(
+            progress = { progress }, 
+            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape), 
+            color = color, 
+            trackColor = Gray100
+        )
     }
 }

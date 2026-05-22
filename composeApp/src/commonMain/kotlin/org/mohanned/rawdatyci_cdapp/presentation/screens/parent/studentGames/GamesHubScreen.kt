@@ -60,7 +60,7 @@ data class GamesHubScreen(val childId: String = "") : Screen {
                     desc = "تعلم حروف اللغة العربية بطريقة شيقة",
                     icon = Icons.Default.SortByAlpha,
                     color = BluePrimary,
-                    onClick = { navigator.push(GamePlayScreen(GameType.LETTERS, childId)) }
+                    onClick = { navigator.push(GamePlayScreen(GameType.LETTERS, 1, childId)) }
                 )
 
                 GameCategoryCard(
@@ -68,7 +68,7 @@ data class GamesHubScreen(val childId: String = "") : Screen {
                     desc = "مغامرة ممتعة في عالم الأرقام والحساب",
                     icon = Icons.Default.Filter1,
                     color = MintPrimary,
-                    onClick = { navigator.push(GamePlayScreen(GameType.NUMBERS, childId)) }
+                    onClick = { navigator.push(GamePlayScreen(GameType.NUMBERS, 1, childId)) }
                 )
 
                 GameCategoryCard(
@@ -76,7 +76,7 @@ data class GamesHubScreen(val childId: String = "") : Screen {
                     desc = "تعرف على الألوان والأشكال من حولك",
                     icon = Icons.Default.Palette,
                     color = AmberPrimary,
-                    onClick = { navigator.push(GameType.COLORS.let { GamePlayScreen(it, childId) }) }
+                    onClick = { navigator.push(GamePlayScreen(GameType.COLORS, 1, childId)) }
                 )
             }
         }
@@ -124,7 +124,7 @@ private fun GameCategoryCard(
                     .background(Gray50),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.PlayArrow, null, tint = color, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.KeyboardDoubleArrowLeft, null, tint = color, modifier = Modifier.size(20.dp))
             }
         }
     }

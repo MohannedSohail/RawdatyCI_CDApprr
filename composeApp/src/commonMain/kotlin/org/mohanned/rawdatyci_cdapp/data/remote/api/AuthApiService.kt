@@ -13,11 +13,17 @@ import org.mohanned.rawdatyci_cdapp.data.remote.dto.VerifyOtpResponseDto
 
 interface AuthApiService {
     suspend fun getBranding(): ApiResponse<BrandingDto>
-    suspend fun login(email: String, password: String): ApiResponse<AuthResponseDto>
+    suspend fun adminLogin(email: String, password: String): ApiResponse<AuthResponseDto>
+    suspend fun teacherLogin(email: String, password: String): ApiResponse<AuthResponseDto>
+    suspend fun parentLogin(email: String, password: String): ApiResponse<AuthResponseDto>
     suspend fun refreshToken(refreshToken: String): ApiResponse<AuthResponseDto>
     suspend fun forgotPassword(email: String): ApiResponse<ApiMessageDto>
     suspend fun verifyOtp(email: String, otp: String): ApiResponse<VerifyOtpResponseDto>
-    suspend fun resetPassword(resetToken: String, newPassword: String, confirmPassword: String): ApiResponse<ApiMessageDto>
+    suspend fun resetPassword(
+        resetToken: String,
+        newPassword: String,
+        confirmPassword: String
+    ): ApiResponse<ApiMessageDto>
     suspend fun logout(refreshToken: String): ApiResponse<ApiMessageDto>
 }
 
@@ -27,19 +33,34 @@ class AuthApiServiceImpl(private val client: HttpClient) : AuthApiService {
         client.get("branding")
     }
 
-    override suspend fun login(email: String, password: String): ApiResponse<AuthResponseDto> = safeApiCall {
-        client.post("auth/login") {
+    override suspend fun adminLogin(email: String, password: String): ApiResponse<AuthResponseDto> = safeApiCall {
+        client.post("auth/admin_login") {
             contentType(ContentType.Application.Json)
             setBody(mapOf("email" to email, "password" to password))
         }
     }
 
-    override suspend fun refreshToken(refreshToken: String): ApiResponse<AuthResponseDto> = safeApiCall {
-        client.post("auth/refresh") {
+    override suspend fun teacherLogin(email: String, password: String): ApiResponse<AuthResponseDto> = safeApiCall {
+        client.post("auth/teacher_login") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("refresh_token" to refreshToken))
+            setBody(mapOf("email" to email, "password" to password))
         }
     }
+
+    override suspend fun parentLogin(email: String, password: String): ApiResponse<AuthResponseDto> = safeApiCall {
+        client.post("auth/parent_login") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("email" to email, "password" to password))
+        }
+    }
+
+    override suspend fun refreshToken(refreshToken: String): ApiResponse<AuthResponseDto> =
+        safeApiCall {
+            client.post("auth/refresh") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("refresh_token" to refreshToken))
+            }
+        }
 
     override suspend fun forgotPassword(email: String): ApiResponse<ApiMessageDto> = safeApiCall {
         client.post("auth/forgot-password") {
@@ -48,12 +69,13 @@ class AuthApiServiceImpl(private val client: HttpClient) : AuthApiService {
         }
     }
 
-    override suspend fun verifyOtp(email: String, otp: String): ApiResponse<VerifyOtpResponseDto> = safeApiCall {
-        client.post("auth/verify-otp") {
-            contentType(ContentType.Application.Json)
-            setBody(mapOf("email" to email, "otp" to otp))
+    override suspend fun verifyOtp(email: String, otp: String): ApiResponse<VerifyOtpResponseDto> =
+        safeApiCall {
+            client.post("auth/verify-otp") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("email" to email, "otp" to otp))
+            }
         }
-    }
 
     override suspend fun resetPassword(
         resetToken: String,
@@ -62,11 +84,13 @@ class AuthApiServiceImpl(private val client: HttpClient) : AuthApiService {
     ): ApiResponse<ApiMessageDto> = safeApiCall {
         client.post("auth/reset-password") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf(
-                "reset_token" to resetToken,
-                "password" to newPassword,
-                "password_confirmation" to confirmPassword
-            ))
+            setBody(
+                mapOf(
+                    "reset_token" to resetToken,
+                    "password" to newPassword,
+                    "password_confirmation" to confirmPassword
+                )
+            )
         }
     }
 

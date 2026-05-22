@@ -150,9 +150,14 @@ compose.desktop {
         mainClass = "org.mohanned.rawdatyci_cdapp.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb,TargetFormat.Exe)
             packageName = "org.mohanned.rawdatyci_cdapp"
             packageVersion = "1.0.0"
+
+            windows {
+                shortcut = true
+                menu = true
+            }
         }
     }
 }

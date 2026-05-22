@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -24,6 +24,7 @@ import org.mohanned.rawdatyci_cdapp.domain.model.UserRole
 import org.mohanned.rawdatyci_cdapp.presentation.components.*
 import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.UsersIntent
+import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.UsersState
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.UsersViewModel
 
 object AdminUsersScreen : Screen {
@@ -56,12 +57,12 @@ object AdminUsersScreen : Screen {
 
 @Composable
 fun AdminUsersScreenContent(
-    state: org.mohanned.rawdatyci_cdapp.presentation.viewmodel.UsersState,
+    state: UsersState,
     initialRole: String? = null,
     onUserClick: (User) -> Unit,
     onDelete: (User) -> Unit,
     onAdd: () -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onRefresh: () -> Unit,
     onSearch: (String) -> Unit,
     onTabChanged: (String?) -> Unit,
@@ -70,7 +71,6 @@ fun AdminUsersScreenContent(
     val tabs = listOf("الكل", "المعلمات", "أولياء الأمور")
     val roles = listOf(null, "teacher", "parent")
     
-    // استخدام remember(initialRole) لتحديث الـ tab المختار عند فتح الشاشة بدور معين
     var selectedTabIndex by remember(initialRole) { 
         mutableStateOf(roles.indexOf(initialRole).coerceAtLeast(0)) 
     }
@@ -200,26 +200,47 @@ fun AdminUsersScreenContent(
 
 @Composable
 fun UserCardItem(user: User, onClick: () -> Unit, onDelete: () -> Unit) {
-    RawdatyCard(onClick = onClick, modifier = Modifier.fillMaxWidth(), containerColor = White) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(12.dp)) {
+    RawdatyCard(
+        onClick = onClick, 
+        modifier = Modifier.fillMaxWidth(), 
+        containerColor = White,
+        elevation = 2.dp,
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically, 
+            horizontalArrangement = Arrangement.spacedBy(16.dp), // مسافة أكبر ووضوح أفضل
+            modifier = Modifier.padding(12.dp)
+        ) {
             Box {
                 RawdatyAvatar(
                     name = user.name,
-                    size = 48.dp,
+                    size = 52.dp, // تكبير خفيف للأفاتار
                     gradient = when (user.role) {
                         UserRole.TEACHER -> RawdatyGradients.AvatarMint
-                        UserRole.ADMIN, UserRole.SUPER_ADMIN -> RawdatyGradients.AvatarBlue
                         else -> RawdatyGradients.AvatarBlue
                     }
                 )
                 if (user.isActive) {
-                    Box(Modifier.size(10.dp).clip(CircleShape).background(ColorSuccess).border(1.dp, White, CircleShape).align(Alignment.BottomEnd))
+                    Box(Modifier.size(12.dp).clip(CircleShape).background(ColorSuccess).border(1.5.dp, White, CircleShape).align(Alignment.BottomEnd))
                 }
             }
 
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(user.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically, 
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f, fill = false),
+                        text = user.name, 
+                        fontWeight = FontWeight.SemiBold,
+                        color = Gray900,
+                        fontFamily = CairoFontFamily,
+                        fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                     RoleTag(role = when (user.role) {
                         UserRole.TEACHER -> "معلمة"
                         UserRole.ADMIN -> "مشرف"
@@ -227,11 +248,29 @@ fun UserCardItem(user: User, onClick: () -> Unit, onDelete: () -> Unit) {
                         else -> "ولي أمر"
                     }, useSmallText = true)
                 }
-                Text(user.email, style = MaterialTheme.typography.labelSmall, color = Gray500, fontFamily = CairoFontFamily, maxLines = 1)
+                
+                Spacer(Modifier.height(4.dp))
+                
+                Text(
+                    text = user.email, 
+                    style = MaterialTheme.typography.labelSmall, 
+                    color = Gray500, 
+                    fontFamily = CairoFontFamily, 
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
 
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.DeleteOutline, null, tint = ColorError.copy(0.7f), modifier = Modifier.size(20.dp))
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(32.dp).background(ColorError.copy(0.05f), CircleShape)
+            ) {
+                Icon(
+                    Icons.Default.DeleteOutline, 
+                    null, 
+                    tint = ColorError.copy(0.8f), 
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }

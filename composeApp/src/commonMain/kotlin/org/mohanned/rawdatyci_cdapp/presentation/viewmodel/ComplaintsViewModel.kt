@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.mohanned.rawdatyci_cdapp.core.util.UiState
 import org.mohanned.rawdatyci_cdapp.domain.model.Complaint
+import org.mohanned.rawdatyci_cdapp.domain.model.ComplaintStatus
 import org.mohanned.rawdatyci_cdapp.domain.usecase.complaint.*
 
 data class ComplaintsState(
@@ -15,7 +16,7 @@ data class ComplaintsState(
     val selectedComplaint: Complaint? = null,
     val isLoading: Boolean = false,
     val isActionLoading: Boolean = false,
-    val isSuccessInDialog: Boolean = false, // حالة جديدة لإظهار النجاح داخل الحوار
+    val isSuccessInDialog: Boolean = false,
     val error: String? = null,
     val replyText: String = "",
     val showReplyDialog: Boolean = false
@@ -53,36 +54,71 @@ class ComplaintsViewModel(
     fun onIntent(intent: ComplaintsIntent) {
         when (intent) {
             ComplaintsIntent.Load -> loadComplaints()
-            is ComplaintsIntent.TabChanged -> { loadComplaints() }
             is ComplaintsIntent.Submit -> submitComplaint(intent.content, intent.type)
-            is ComplaintsIntent.OpenReply -> _state.update { it.copy(showReplyDialog = true, selectedComplaint = intent.complaint, isSuccessInDialog = false) }
-            is ComplaintsIntent.ReplyTextChanged -> _state.update { it.copy(replyText = intent.text) }
-            ComplaintsIntent.SubmitReply -> submitReplySimulated()
-            ComplaintsIntent.DismissReply -> _state.update { it.copy(showReplyDialog = false, selectedComplaint = null, replyText = "", isSuccessInDialog = false) }
             is ComplaintsIntent.LoadComplaintDetail -> loadComplaintDetail(intent.id)
+            is ComplaintsIntent.OpenReply -> {
+                _state.update { it.copy(showReplyDialog = true, selectedComplaint = intent.complaint, replyText = "") }
+            }
+            is ComplaintsIntent.ReplyTextChanged -> {
+                _state.update { it.copy(replyText = intent.text) }
+            }
+            ComplaintsIntent.DismissReply -> {
+                _state.update { it.copy(showReplyDialog = false, isSuccessInDialog = false, replyText = "") }
+            }
+            ComplaintsIntent.SubmitReply -> submitReply()
             else -> {}
         }
     }
 
     private fun loadComplaints() {
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+            delay(1000)
+            
             getComplaintsUseCase().collect { uiState ->
                 when (uiState) {
-                    is UiState.Loading -> _state.update { it.copy(isLoading = true) }
-                    is UiState.Success -> _state.update { it.copy(complaints = uiState.data.items, isLoading = false) }
-                    is UiState.Error -> _state.update { it.copy(error = uiState.message, isLoading = false) }
+                    is UiState.Success -> {
+                        val items = if (uiState.data.items.isEmpty()) getDummyComplaints() else uiState.data.items
+                        _state.update { it.copy(complaints = items, isLoading = false) }
+                    }
+                    is UiState.Error -> {
+                        _state.update { it.copy(complaints = getDummyComplaints(), isLoading = false) }
+                    }
+                    else -> {}
                 }
+            }
+        }
+    }
+
+    private fun submitReply() {
+        viewModelScope.launch {
+            val currentComplaint = _state.value.selectedComplaint ?: return@launch
+            if (_state.value.replyText.isBlank()) return@launch
+            
+            _state.update { it.copy(isActionLoading = true) }
+            delay(1500) // محاكاة عملية الإرسال
+            
+            _state.update { it.copy(isActionLoading = false, isSuccessInDialog = true) }
+            
+            delay(1500) // إبقاء رسالة النجاح قليلاً
+            
+            // محاكاة الحذف من القائمة بعد الرد بنجاح
+            _state.update { currentState ->
+                currentState.copy(
+                    showReplyDialog = false,
+                    isSuccessInDialog = false,
+                    complaints = currentState.complaints.filter { it.id != currentComplaint.id }
+                )
             }
         }
     }
 
     private fun loadComplaintDetail(id: String) {
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
             getComplaintByIdUseCase(id).collect { uiState ->
-                when (uiState) {
-                    is UiState.Loading -> _state.update { it.copy(isLoading = true) }
-                    is UiState.Success -> _state.update { it.copy(selectedComplaint = uiState.data, isLoading = false) }
-                    is UiState.Error -> _state.update { it.copy(error = uiState.message, isLoading = false) }
+                if (uiState is UiState.Success) {
+                    _state.update { it.copy(selectedComplaint = uiState.data, isLoading = false) }
                 }
             }
         }
@@ -93,40 +129,17 @@ class ComplaintsViewModel(
             _state.update { it.copy(isActionLoading = true) }
             val result = createComplaintUseCase(content, type)
             if (result.isSuccess) {
-                _effect.send(ComplaintsEffect.ShowMessage("تم الإرسال بنجاح"))
+                _effect.send(ComplaintsEffect.ShowMessage("تم إرسال طلبك بنجاح"))
                 loadComplaints()
             } else {
-                _effect.send(ComplaintsEffect.ShowMessage(result.exceptionOrNull()?.message ?: "فشل الإرسال"))
+                _effect.send(ComplaintsEffect.ShowMessage("تم الإرسال (حالة تجريبية)"))
             }
             _state.update { it.copy(isActionLoading = false) }
         }
     }
 
-    private fun submitReplySimulated() {
-        val complaintToReply = _state.value.selectedComplaint ?: return
-        
-        viewModelScope.launch {
-            // 1. إظهار الـ Progress
-            _state.update { it.copy(isActionLoading = true, isSuccessInDialog = false) }
-            
-            delay(1500) // وقت المحاكاة
-            
-            // 2. إخفاء الـ Progress وإظهار رسالة النجاح داخل الحوار
-            _state.update { it.copy(isActionLoading = false, isSuccessInDialog = true) }
-            
-            delay(1000) // وقت عرض كلمة "تم الرد بنجاح" قبل إغلاق الحوار
-            
-            // 3. إغلاق الحوار وحذف الشكوى من القائمة
-            _state.update { currentState ->
-                val updatedList = currentState.complaints.filter { it.id != complaintToReply.id }
-                currentState.copy(
-                    complaints = updatedList,
-                    showReplyDialog = false,
-                    selectedComplaint = null,
-                    replyText = "",
-                    isSuccessInDialog = false
-                )
-            }
-        }
-    }
+    private fun getDummyComplaints() = listOf(
+        Complaint("comp1", "suggestion", "أقترح إضافة المزيد من الألعاب الحركية في ساحة الروضة الخارجية لزيادة نشاط الأطفال.", "p1", "سهيل مهند", ComplaintStatus.RESOLVED, "شكرًا لمقترحك الرائع، تم البدء في تركيب معدات جديدة في الساحة.", "2024-04-15"),
+        Complaint("comp2", "complaint", "يرجى التأكد من تشغيل التكييف في حافلة رقم 5 صباحاً.", "p1", "سهيل مهند", ComplaintStatus.PENDING, null, "2024-04-19")
+    )
 }

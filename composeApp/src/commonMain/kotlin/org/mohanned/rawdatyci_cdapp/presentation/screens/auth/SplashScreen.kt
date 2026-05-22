@@ -2,12 +2,10 @@ package org.mohanned.rawdatyci_cdapp.presentation.screens.auth
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,31 +14,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyLogo
 import org.mohanned.rawdatyci_cdapp.presentation.navigation.roleToHome
-import org.mohanned.rawdatyci_cdapp.presentation.theme.BlueDark
-import org.mohanned.rawdatyci_cdapp.presentation.theme.BlueLight
-import org.mohanned.rawdatyci_cdapp.presentation.theme.CairoFontFamily
-import org.mohanned.rawdatyci_cdapp.presentation.theme.MintPrimary
-import org.mohanned.rawdatyci_cdapp.presentation.theme.RawdatyGradients
-import org.mohanned.rawdatyci_cdapp.presentation.theme.White
+import org.mohanned.rawdatyci_cdapp.presentation.theme.*
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.AuthEffect
 import org.mohanned.rawdatyci_cdapp.presentation.viewmodel.AuthViewModel
-import rawdatyci_cdapp.composeapp.generated.resources.Res
-import rawdatyci_cdapp.composeapp.generated.resources.rawdatylogo
-import kotlin.random.Random
 
 object SplashScreen : Screen {
     @Composable
@@ -72,44 +63,37 @@ object SplashScreen : Screen {
 
 @Composable
 fun SplashScreenContent(onFinished: () -> Unit = {}) {
-    var phase by remember { mutableStateOf(0) }
+    var startAnimations by remember { mutableStateOf(false) }
 
-    val ring1Scale by animateFloatAsState(
-        targetValue = if (phase >= 1) 2.6f else 0f,
-        animationSpec = tween(1000, easing = CubicBezierEasing(0.2f, 0f, 0.4f, 1f))
+    // ✅ تحويل الأنيميشن ليعمل لمرة واحدة فقط عند تغيير startAnimations
+    val pulseScale by animateFloatAsState(
+        targetValue = if (startAnimations) 1.6f else 1f,
+        animationSpec = tween(2500, easing = FastOutSlowInEasing),
+        label = "pulseScale"
     )
-    val ring2Scale by animateFloatAsState(
-        targetValue = if (phase >= 1) 3.2f else 0f,
-        animationSpec = tween(1300, delayMillis = 200, easing = CubicBezierEasing(0.2f, 0f, 0.4f, 1f))
+
+    val pulseAlpha by animateFloatAsState(
+        targetValue = if (startAnimations) 0f else 0.5f,
+        animationSpec = tween(2500, easing = FastOutSlowInEasing),
+        label = "pulseAlpha"
     )
+    
     val logoScale by animateFloatAsState(
-        targetValue = if (phase >= 1) 1f else 0.15f,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow)
+        targetValue = if (startAnimations) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessLow),
+        label = "logoScale"
     )
-    val logoAlpha by animateFloatAsState(
-        targetValue = if (phase >= 1) 1f else 0f,
-        animationSpec = tween(400)
-    )
-    val nameAlpha by animateFloatAsState(
-        targetValue = if (phase >= 2) 1f else 0f,
-        animationSpec = tween(500)
-    )
-    val tagAlpha by animateFloatAsState(
-        targetValue = if (phase >= 2) 1f else 0f,
-        animationSpec = tween(500, delayMillis = 150)
-    )
-    val loaderAlpha by animateFloatAsState(
-        targetValue = if (phase >= 3) 1f else 0f,
-        animationSpec = tween(400)
+    
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (startAnimations) 1f else 0f,
+        animationSpec = tween(1200),
+        label = "contentAlpha"
     )
 
     LaunchedEffect(Unit) {
-        phase = 1
-        delay(650)
-        phase = 2
-        delay(350)
-        phase = 3
-        delay(1800)
+        delay(200)
+        startAnimations = true
+        delay(2800)
         onFinished()
     }
 
@@ -117,83 +101,80 @@ fun SplashScreenContent(onFinished: () -> Unit = {}) {
         modifier = Modifier.fillMaxSize().background(RawdatyGradients.Splash),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val cx = size.width / 2f
-            val cy = size.height / 2f - 36.dp.toPx()
-            val baseRadius = 55.dp.toPx()
-
-            val r1Alpha = ((1f - ring1Scale / 2.6f) * 0.9f).coerceIn(0f, 1f)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2, size.height / 2 - 50.dp.toPx())
             drawCircle(
-                color = Color(0xFF4BAD73).copy(alpha = r1Alpha),
-                radius = baseRadius * ring1Scale,
-                center = Offset(cx, cy),
-                style = Stroke(width = 2.dp.toPx())
-            )
-
-            val r2Alpha = ((1f - ring2Scale / 3.2f) * 0.7f).coerceIn(0f, 1f)
-            drawCircle(
-                color = MintPrimary.copy(alpha = r2Alpha),
-                radius = baseRadius * ring2Scale,
-                center = Offset(cx, cy),
-                style = Stroke(width = 1.5.dp.toPx())
+                color = White.copy(alpha = pulseAlpha * 0.4f),
+                radius = 110.dp.toPx() * pulseScale,
+                center = center,
+                style = Stroke(width = 3.dp.toPx())
             )
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.offset(y = (-36).dp)
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(24.dp).offset(y = (-50).dp)
         ) {
-
             Box(
                 modifier = Modifier
-                    .size(180.dp).graphicsLayer {
-                        scaleX = logoScale
-                        scaleY = logoScale
-                        alpha = logoAlpha
-                    }.clip(CircleShape)
-                    .background(White.copy(0.15f))
-                    .border(1.dp, White.copy(0.2f), CircleShape),
+                    .size(180.dp)
+                    .scale(logoScale)
+                    .clip(CircleShape)
+                    .background(White.copy(alpha = 0.2f))
+                    .border(3.dp, White.copy(alpha = 0.4f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 RawdatyLogo(
-                    modifier = Modifier.size(160.dp).clip(CircleShape),
+                    modifier = Modifier.size(150.dp).clip(CircleShape),
                     color = White
                 )
             }
 
-//            Image(
-//                painter = painterResource(Res.drawable.rawdatylogo),
-//                contentDescription = null,
-//                modifier = Modifier.size(160.dp).graphicsLayer {
-//                    scaleX = logoScale
-//                    scaleY = logoScale
-//                    alpha = logoAlpha
-//                }.clip(CircleShape)
-//            )
-            Spacer(Modifier.height(28.dp))
-            Text(
-                text = "رَوْضَتِي",
-                style = MaterialTheme.typography.displaySmall,
-                color = White,
-                fontWeight = FontWeight.Bold,
-                fontFamily = CairoFontFamily,
-                modifier = Modifier.alpha(nameAlpha)
-            )
-            Spacer(Modifier.height(8.dp))
-//            Text(
-//                text = "طفلك بخير — وأنت على علم",
-//                style = MaterialTheme.typography.bodyLarge,
-//                color = BlueLight,
-//                fontFamily = CairoFontFamily,
-//                modifier = Modifier.alpha(tagAlpha)
-//            )
+            Spacer(Modifier.height(40.dp))
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.alpha(contentAlpha)
+            ) {
+                Text(
+                    text = "رَوْضَتِي",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = White,
+                    fontWeight = FontWeight.Black,
+                    fontFamily = CairoFontFamily,
+                    letterSpacing = 3.sp
+                )
+                Text(
+                    text = "رعاية متميزة لجيل واعد",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = White.copy(alpha = 0.8f),
+                    fontFamily = CairoFontFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
-        CircularProgressIndicator(
-            color = BlueDark,
-            trackColor = White,
-            strokeWidth = 3.dp,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 60.dp).size(40.dp).alpha(loaderAlpha)
-        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 50.dp)
+                .alpha(contentAlpha),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(
+                color = White,
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "جاري تحضير عالمك الممتع...",
+                color = White.copy(alpha = 0.7f),
+                fontSize = 11.sp,
+                fontFamily = CairoFontFamily,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }

@@ -27,14 +27,27 @@ class AuthRepositoryImpl(
         }
     }
 
-    override suspend fun login(
+    override suspend fun adminLogin(email: String, password: String): ApiResponse<Pair<LoggedUser, AuthTokens>> {
+        return performLogin(email, password) { e, p -> api.adminLogin(e, p) }
+    }
+
+    override suspend fun teacherLogin(email: String, password: String): ApiResponse<Pair<LoggedUser, AuthTokens>> {
+        return performLogin(email, password) { e, p -> api.teacherLogin(e, p) }
+    }
+
+    override suspend fun parentLogin(email: String, password: String): ApiResponse<Pair<LoggedUser, AuthTokens>> {
+        return performLogin(email, password) { e, p -> api.parentLogin(e, p) }
+    }
+
+    private suspend fun performLogin(
         email: String,
-        password: String
+        password: String,
+        loginCall: suspend (String, String) -> ApiResponse<org.mohanned.rawdatyci_cdapp.data.remote.dto.AuthResponseDto>
     ): ApiResponse<Pair<LoggedUser, AuthTokens>> {
         val slug = extractSlug(email)
         ApiConfig.setTenant(slug)
 
-        return when (val response = api.login(email, password)) {
+        return when (val response = loginCall(email, password)) {
             is ApiResponse.Success -> {
                 val dto = response.data
                 tokenManager.saveTokens(dto.accessToken, dto.refreshToken)
@@ -53,6 +66,18 @@ class AuthRepositoryImpl(
                         AuthTokens(dto.accessToken, dto.refreshToken, dto.expiresIn)
                     )
                 )
+            }
+            is ApiResponse.Error -> ApiResponse.Error(response.code, response.message, response.errorCode)
+            is ApiResponse.NetworkError -> ApiResponse.NetworkError(response.message)
+        }
+    }
+
+    override suspend fun refreshToken(refreshToken: String): ApiResponse<AuthTokens> {
+        return when (val response = api.refreshToken(refreshToken)) {
+            is ApiResponse.Success -> {
+                val dto = response.data
+                tokenManager.saveTokens(dto.accessToken, dto.refreshToken)
+                ApiResponse.Success(AuthTokens(dto.accessToken, dto.refreshToken, dto.expiresIn))
             }
             is ApiResponse.Error -> ApiResponse.Error(response.code, response.message, response.errorCode)
             is ApiResponse.NetworkError -> ApiResponse.NetworkError(response.message)

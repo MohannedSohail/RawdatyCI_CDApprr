@@ -14,6 +14,7 @@ import org.mohanned.rawdatyci_cdapp.domain.usecase.auth.LogoutUseCase
 data class AuthState(
     val email: String = "",
     val password: String = "",
+    val role: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -21,6 +22,7 @@ data class AuthState(
 sealed class AuthIntent {
     data class EmailChanged(val v: String) : AuthIntent()
     data class PasswordChanged(val v: String) : AuthIntent()
+    data class SetRole(val role: String) : AuthIntent()
     object Login : AuthIntent()
     object Logout : AuthIntent()
 }
@@ -34,7 +36,7 @@ sealed class AuthEffect {
 class AuthViewModel(
     private val loginUseCase: LoginUseCase,
     private val logoutUseCase: LogoutUseCase,
-    private val authRepository: AuthRepository // For session check
+    private val authRepository: AuthRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(AuthState())
     val state = _state.asStateFlow()
@@ -46,6 +48,7 @@ class AuthViewModel(
         when (intent) {
             is AuthIntent.EmailChanged -> _state.update { it.copy(email = intent.v, error = null) }
             is AuthIntent.PasswordChanged -> _state.update { it.copy(password = intent.v, error = null) }
+            is AuthIntent.SetRole -> _state.update { it.copy(role = intent.role) }
             AuthIntent.Login -> login()
             AuthIntent.Logout -> logout()
         }
@@ -60,7 +63,7 @@ class AuthViewModel(
     }
 
     private fun login() = viewModelScope.launch {
-        loginUseCase(_state.value.email, _state.value.password).collect { uiState ->
+        loginUseCase(_state.value.email, _state.value.password, _state.value.role).collect { uiState ->
             when (uiState) {
                 is UiState.Loading -> _state.update { it.copy(isLoading = true, error = null) }
                 is UiState.Success -> {

@@ -37,12 +37,20 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.mohanned.rawdatyci_cdapp.presentation.navigation.roleToHome
 import rawdatyci_cdapp.composeapp.generated.resources.Res
 import rawdatyci_cdapp.composeapp.generated.resources.rawdatylogo
+import org.mohanned.rawdatyci_cdapp.presentation.components.WaveShape
 
 data class LoginScreen(val role: String? = null) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel: AuthViewModel = koinViewModel()
+
+        // تثبيت الـ Role المختار في الـ ViewModel فور دخول الشاشة ✅
+        LaunchedEffect(role) {
+            role?.let {
+                viewModel.onIntent(AuthIntent.SetRole(it))
+            }
+        }
         
         AuthScreenRoot(
             viewModel = viewModel,
@@ -98,6 +106,7 @@ fun LoginScreenUI(
 ) {
     var headerVisible by remember { mutableStateOf(false) }
     var formVisible   by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
         headerVisible = true
@@ -115,9 +124,13 @@ fun LoginScreenUI(
     val formOffsetY by animateFloatAsState(targetValue = if (formVisible) 0f else 18f, animationSpec = tween(520, easing = EaseOutQuart))
 
     Scaffold(containerColor = White) { padding ->
-        Column(modifier = Modifier.fillMaxSize().background(White).verticalScroll(rememberScrollState())) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(White)
+        ) {
             Box(
-                modifier = Modifier.fillMaxWidth().height(360.dp).clip(WaveShape()).background(RawdatyGradients.Splash),
+                modifier = Modifier.fillMaxWidth().height(300.dp).clip(WaveShape()).background(RawdatyGradients.Splash),
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -131,22 +144,34 @@ fun LoginScreenUI(
                         modifier = Modifier.size(130.dp).clip(CircleShape).scale(logoScale).alpha(logoAlpha).border(2.dp, White.copy(0.2f), CircleShape).offset(y = logoOffsetY.dp)
                     )
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.alpha(textAlpha).offset(y = textOffsetY.dp)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom =20.dp).alpha(textAlpha).offset(y = textOffsetY.dp)) {
                         Text("مرحباً بك مجدداً", style = MaterialTheme.typography.displaySmall, color = White, fontWeight = FontWeight.Black, fontFamily = CairoFontFamily)
-                        Text("نظام رَوْضَتِي - الجيل الخامس", style = MaterialTheme.typography.titleMedium, color = White.copy(alpha = .8f), fontFamily = CairoFontFamily, modifier = Modifier.alpha(subAlpha))
+                        Text("نظام رَوْضَتِي - لادارة المدارس و رياض الأطفال", style = MaterialTheme.typography.titleMedium, color = White.copy(alpha = .8f), fontFamily = CairoFontFamily, modifier = Modifier.alpha(subAlpha))
                     }
                 }
             }
 
-            Box(modifier = Modifier.fillMaxSize().offset(y = (-40).dp).alpha(formAlpha).offset(y = formOffsetY.dp)) {
-                Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 40.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = (-40).dp)
+                    .alpha(formAlpha)
+                    .offset(y = formOffsetY.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 24.dp, vertical = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     if (generalError != null) {
                         Surface(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp), color = ColorError.copy(.1f), shape = RoundedCornerShape(12.dp)) {
                             Text(generalError, color = ColorError, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, fontFamily = CairoFontFamily, fontWeight = FontWeight.Bold)
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Column(modifier = Modifier.padding(top = 15.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                         RawdatyField(
                             value = identifier, 
                             onValueChange = onIdentifierChange, 
@@ -165,11 +190,11 @@ fun LoginScreenUI(
                                 isPassword = true,
                                 isError = generalError != null
                             )
-                            Text("نسيت كلمة المرور؟", modifier = Modifier.align(Alignment.End).padding(top = 10.dp).clickable { onForgotPassword() }, color = BluePrimary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily)
                         }
-                        Spacer(Modifier.height(16.dp))
                         RawdatyButton(text = "تسجيل الدخول", onClick = onSubmit, modifier = Modifier.fillMaxWidth().height(60.dp), isLoading = isLoading, backgroundColor = BluePrimary)
                     }
+                    
+                    Spacer(Modifier.height(60.dp))
                 }
             }
         }

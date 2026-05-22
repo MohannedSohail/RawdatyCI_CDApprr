@@ -10,6 +10,7 @@ import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
 interface SettingsApiService {
     suspend fun getSettings(): ApiResponse<SettingsDto>
     suspend fun updateSettings(settings: SettingsDto): ApiResponse<SettingsDto>
+    suspend fun getQuota(): ApiResponse<Unit> // يمكنك استبدال Unit بـ Dto خاص بالـ Quota إذا توفر
 }
 
 class SettingsApiServiceImpl(private val client: HttpClient) : SettingsApiService {
@@ -22,5 +23,9 @@ class SettingsApiServiceImpl(private val client: HttpClient) : SettingsApiServic
             contentType(ContentType.Application.Json)
             setBody(settings)
         }
+    }
+
+    override suspend fun getQuota(): ApiResponse<Unit> = safeApiCall {
+        client.get("settings/quota")
     }
 }

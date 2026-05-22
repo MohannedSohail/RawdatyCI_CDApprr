@@ -14,7 +14,7 @@ class GamesRepositoryImpl(
 ) : GamesRepository {
     override suspend fun getQuestions(gameType: String, childId: String?): ApiResponse<List<GameQuestion>> {
         return try {
-            val response = api.getQuestions(gameType)
+            val response = api.getQuestions(gameType, childId ?: "")
             if (response is ApiResponse.Success) {
                 ApiResponse.Success(response.data.map { it.toDomain() })
             } else {
@@ -50,7 +50,8 @@ class GamesRepositoryImpl(
 
     override suspend fun updateQuestion(id: String, text: String?, options: List<String>?, correctAnswer: String?): ApiResponse<GameQuestion> {
         return try {
-            val response = api.updateQuestion(id, text, options, correctAnswer)
+            // نمرر null لـ isActive كقيمة افتراضية بما أنه غير موجود في توقيع الـ Repository حالياً
+            val response = api.updateQuestion(id, correctAnswer, null)
             if (response is ApiResponse.Success) {
                 ApiResponse.Success(response.data.toDomain())
             } else {

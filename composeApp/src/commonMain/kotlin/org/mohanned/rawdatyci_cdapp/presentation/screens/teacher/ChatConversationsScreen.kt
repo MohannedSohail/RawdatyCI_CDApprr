@@ -35,57 +35,67 @@ object ChatConversationsScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel: ChatViewModel = koinViewModel()
         val state by viewModel.state.collectAsState()
+        var searchQuery by remember { mutableStateOf("") }
 
         LaunchedEffect(Unit) {
             viewModel.onIntent(ChatIntent.LoadConversations)
         }
 
+        val filteredConversations = state.conversations.filter {
+            it.participantName.contains(searchQuery, ignoreCase = true)
+        }
+
         Scaffold(
             containerColor = AppBg,
             topBar = {
-                GlassHeader(
+                ModernHeader(
                     title = "المحادثات",
+                    subtitle = "تواصل مباشر مع أولياء الأمور",
                     onBack = { navigator.pop() },
                     gradient = RawdatyGradients.Primary,
-                    headerHeight = 140.dp
+                    headerHeight = 150.dp
                 )
             }
         ) { padding ->
             Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-                Surface(color = White, shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                    Box(modifier = Modifier.padding(16.dp)) {
-                        OutlinedTextField(
-                            value = "",
-                            onValueChange = { },
-                            placeholder = { Text("بحث في المحادثات...", fontFamily = CairoFontFamily, color = Gray400) },
-                            leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BluePrimary, unfocusedBorderColor = Gray200)
+                // Search Bar
+                Box(modifier = Modifier.padding(horizontal = 20.dp).offset(y = (-25).dp)) {
+                    RawdatyCard(containerColor = White, elevation = 4.dp) {
+                        RawdatyField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            label = "ابحث عن اسم ولي الأمر...",
+                            leadingIcon = Icons.Default.Search,
+                            backgroundColor = Color.Transparent
                         )
                     }
                 }
 
                 if (state.isLoading) {
-                    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(8) { ShimmerBox(Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(16.dp))) }
+                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        repeat(6) { ShimmerBox(Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(16.dp))) }
                     }
-                } else if (state.conversations.isEmpty()) {
-                    EmptyState(title = "لا توجد محادثات", subtitle = "ابدأ بالتواصل مع أولياء الأمور أو المعلمات", icon = Icons.Default.Chat)
+                } else if (filteredConversations.isEmpty()) {
+                    EmptyState(
+                        title = "لا توجد محادثات",
+                        subtitle = "ستظهر هنا المحادثات النشطة مع أولياء الأمور.",
+                        icon = Icons.Default.Chat
+                    )
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(state.conversations) { conversation ->
-                            ConversationItem(
-                                conversation = conversation,
-                                onClick = { 
-                                    navigator.push(ChatRoomScreen(conversation.id, conversation.participantName, conversation.childName ?: ""))
-                                }
-                            )
+                    AnimateEntrance {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 30.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(filteredConversations) { conversation ->
+                                ChatConversationItem(
+                                    conversation = conversation,
+                                    onClick = {
+                                        navigator.push(ChatRoomScreen(conversation.id, conversation.participantName, conversation.childName ?: "الطالب"))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -96,7 +106,13 @@ object ChatConversationsScreen : Screen {
 
 @Composable
 private fun ChatConversationItem(conversation: Conversation, onClick: () -> Unit) {
-    RawdatyCard(onClick = onClick, containerColor = White, elevation = 1.dp) {
+    RawdatyCard(
+        modifier = Modifier.padding(horizontal = 20.dp),
+        onClick = onClick,
+        containerColor = White,
+        elevation = 2.dp,
+        shape = RoundedCornerShape(20.dp)
+    ) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -111,7 +127,7 @@ private fun ChatConversationItem(conversation: Conversation, onClick: () -> Unit
 
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text(conversation.participantName, fontWeight = FontWeight.Bold, color = Gray900, fontFamily = CairoFontFamily)
+                    Text(conversation.participantName, fontWeight = FontWeight.Bold, color = BlueDark, fontFamily = CairoFontFamily)
                     Text(conversation.lastMessageAt ?: "", fontSize = 10.sp, color = Gray400, fontFamily = CairoFontFamily)
                 }
                 Spacer(Modifier.height(4.dp))

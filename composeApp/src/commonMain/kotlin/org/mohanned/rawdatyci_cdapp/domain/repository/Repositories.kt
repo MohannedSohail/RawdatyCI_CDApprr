@@ -15,16 +15,21 @@ import org.mohanned.rawdatyci_cdapp.domain.model.GameAnswer
 import org.mohanned.rawdatyci_cdapp.domain.model.GameQuestion
 import org.mohanned.rawdatyci_cdapp.domain.model.KindergartenSettings
 import org.mohanned.rawdatyci_cdapp.domain.model.LoggedUser
+import org.mohanned.rawdatyci_cdapp.domain.model.UserRole
 import org.mohanned.rawdatyci_cdapp.domain.model.Message
 import org.mohanned.rawdatyci_cdapp.domain.model.News
 import org.mohanned.rawdatyci_cdapp.domain.model.PaginatedResult
 import org.mohanned.rawdatyci_cdapp.domain.model.User
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.AttendanceRecordRequest
+import org.mohanned.rawdatyci_cdapp.data.remote.dto.CreateChildRequest
 
 interface AuthRepository {
     suspend fun getBranding(): ApiResponse<Branding>
-    suspend fun login(email: String, password: String): ApiResponse<Pair<LoggedUser, AuthTokens>>
+    suspend fun adminLogin(email: String, password: String): ApiResponse<Pair<LoggedUser, AuthTokens>>
+    suspend fun parentLogin(email: String, password: String): ApiResponse<Pair<LoggedUser, AuthTokens>>
+    suspend fun teacherLogin(email: String, password: String): ApiResponse<Pair<LoggedUser, AuthTokens>>
     suspend fun logout(): ApiResponse<Unit>
+    suspend fun refreshToken(refreshToken: String): ApiResponse<AuthTokens>
     suspend fun forgotPassword(email: String): ApiResponse<ApiMessageDto>
     suspend fun verifyOtp(email: String, otp: String): ApiResponse<String>
     suspend fun resetPassword(
@@ -51,7 +56,8 @@ interface UsersRepository {
         password: String,
         role: String,
         phone: String? = null,
-        classId: String? = null
+        classId: String? = null,
+        children: List<CreateChildRequest>? = null
     ): ApiResponse<User>
 
     suspend fun updateUser(

@@ -3,6 +3,7 @@ package org.mohanned.rawdatyci_cdapp.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.mohanned.rawdatyci_cdapp.core.util.UiState
@@ -28,7 +29,7 @@ data class GameState(
     val error: String? = null,
     val childId: String = "",
     val totalQuestions: Int = 0,
-    val history: List<GameQuestion> = emptyList()
+    val level: Int = 1
 )
 
 sealed class GameEffect {
@@ -36,11 +37,10 @@ sealed class GameEffect {
 }
 
 sealed class GameIntent {
-    data class Start(val type: GameType, val childId: String = "") : GameIntent()
+    data class Start(val type: GameType, val level: Int, val childId: String = "") : GameIntent()
     data class SelectOption(val option: String) : GameIntent()
     object CheckAnswer : GameIntent()
     object NextQuestion : GameIntent()
-    data class LoadHistory(val childId: String) : GameIntent()
 }
 
 class GameViewModel(
@@ -58,34 +58,31 @@ class GameViewModel(
 
     fun onIntent(intent: GameIntent) {
         when (intent) {
-            is GameIntent.Start -> startGame(intent.type, intent.childId)
+            is GameIntent.Start -> startGame(intent.type, intent.level, intent.childId)
             is GameIntent.SelectOption -> _state.update { it.copy(selectedOption = intent.option) }
             GameIntent.CheckAnswer -> checkAnswer()
             GameIntent.NextQuestion -> nextQuestion()
-            is GameIntent.LoadHistory -> loadHistory(intent.childId)
         }
     }
 
-    private fun startGame(type: GameType, childId: String) {
+    private fun startGame(type: GameType, level: Int, childId: String) {
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null, questions = emptyList(), level = level) }
+            delay(600) // ✅ Shimmer سريع جداً كما طلبت
+            
             getGameQuestionsUseCase(type.name.lowercase(), childId).collect { uiState ->
-                when (uiState) {
-                    is UiState.Loading -> _state.update { it.copy(isLoading = true) }
-                    is UiState.Success -> {
-                        startTime = TimeSource.Monotonic.markNow()
-                        _state.update { it.copy(
-                            questions = uiState.data,
-                            currentIndex = 0,
-                            currentQuestion = uiState.data.firstOrNull(),
-                            totalQuestions = uiState.data.size,
-                            score = 0,
-                            answers = emptyList(),
-                            childId = childId,
-                            isLoading = false
-                        ) }
-                    }
-                    is UiState.Error -> _state.update { it.copy(isLoading = false, error = uiState.message) }
-                }
+                val dummyItems = getDummyQuestions(type, level)
+                _state.update { it.copy(
+                    questions = dummyItems,
+                    currentIndex = 0,
+                    currentQuestion = dummyItems.firstOrNull(),
+                    totalQuestions = dummyItems.size,
+                    score = 0,
+                    answers = emptyList(),
+                    childId = childId,
+                    isLoading = false
+                ) }
+                startTime = TimeSource.Monotonic.markNow()
             }
         }
     }
@@ -109,15 +106,10 @@ class GameViewModel(
             if (nextIndex >= s.questions.size) {
                 val elapsed = startTime?.elapsedNow()?.inWholeSeconds?.toInt() ?: 0
                 val stars = when {
-                    s.score.toFloat() / s.questions.size >= 0.9 -> 3
-                    s.score.toFloat() / s.questions.size >= 0.6 -> 2
+                    s.score.toFloat() / s.questions.size >= 0.8 -> 3
+                    s.score.toFloat() / s.questions.size >= 0.5 -> 2
                     else -> 1
                 }
-                
-                if (s.childId.isNotBlank()) {
-                    saveGameResultUseCase(s.childId, s.currentQuestion?.gameType?.name?.lowercase() ?: "", s.score, s.answers)
-                }
-                
                 _effect.send(GameEffect.ShowResult(s.score, s.questions.size, stars, elapsed))
             } else {
                 _state.update { it.copy(
@@ -131,13 +123,40 @@ class GameViewModel(
         }
     }
 
-    private fun loadHistory(childId: String) {
-        viewModelScope.launch {
-            getChildGameHistoryUseCase(childId).collect { uiState ->
-                if (uiState is UiState.Success) {
-                    _state.update { it.copy(history = uiState.data) }
-                }
+    private fun getDummyQuestions(type: GameType, level: Int): List<GameQuestion> {
+        return when (type) {
+            GameType.NUMBERS -> when(level) {
+                1 -> listOf(
+                    GameQuestion("n1", GameType.NUMBERS, 1, "كم عدد أصابع اليد الواحدة؟", null, "5", listOf("4", "5", "6", "1"), null),
+                    GameQuestion("n2", GameType.NUMBERS, 1, "أي رقم هو (اثنين)؟", null, "2", listOf("1", "2", "3", "0"), null),
+                    GameQuestion("n3", GameType.NUMBERS, 1, "ما هو الرقم الذي يأتي قبل 2؟", null, "1", listOf("0", "1", "3", "4"), null)
+                )
+                2 -> listOf(
+                    GameQuestion("n4", GameType.NUMBERS, 2, "2 + 1 كم يساوي؟", null, "3", listOf("2", "3", "4", "5"), null),
+                    GameQuestion("n5", GameType.NUMBERS, 2, "ما هو الرقم (عشرة)؟", null, "10", listOf("1", "10", "100", "0"), null),
+                    GameQuestion("n6", GameType.NUMBERS, 2, "كم عدد أرجل القطة؟", null, "4", listOf("2", "4", "6", "8"), null)
+                )
+                else -> listOf(GameQuestion("n7", GameType.NUMBERS, 3, "ما هو ناتج 5 + 5؟", null, "10", listOf("5", "10", "15", "20"), null))
             }
+            GameType.LETTERS -> when(level) {
+                1 -> listOf(
+                    GameQuestion("l1", GameType.LETTERS, 1, "أرنب يبدأ بحرف:", null, "أ", listOf("أ", "ب", "ت", "ث"), null),
+                    GameQuestion("l2", GameType.LETTERS, 1, "بطة تبدأ بحرف:", null, "ب", listOf("أ", "ب", "م", "ك"), null)
+                )
+                else -> listOf(GameQuestion("l3", GameType.LETTERS, 2, "ما هو الحرف الذي فوقه نقطتان؟", null, "ت", listOf("ب", "ت", "ث", "ن"), null))
+            }
+            GameType.COLORS -> listOf(
+                GameQuestion("c1", GameType.COLORS, 1, "ما هو لون الموز؟", null, "أصفر", listOf("أحمر", "أصفر", "أزرق", "أخضر"), null),
+                GameQuestion("c2", GameType.COLORS, 1, "ما هو لون البحر؟", null, "أزرق", listOf("أصفر", "أزرق", "أبيض", "بنفسجي"), null)
+            )
+            GameType.ANIMALS -> listOf(
+                GameQuestion("a1", GameType.ANIMALS, 1, "من يصيح (مياو)؟", null, "القطة", listOf("الكلب", "القطة", "الأسد", "الفيل"), null),
+                GameQuestion("a2", GameType.ANIMALS, 1, "من هو ملك الغابة؟", null, "الأسد", listOf("النمر", "الأسد", "الفهد", "الذئب"), null)
+            )
+            GameType.FRUITS -> listOf(
+                GameQuestion("f1", GameType.FRUITS, 1, "فاكهة لونها أحمر ومنها عصير لذيذ:", null, "الفراولة", listOf("الموز", "الفراولة", "الكيوي", "العنب"), null),
+                GameQuestion("f2", GameType.FRUITS, 1, "ما هي الفاكهة التي يحبها القرد؟", null, "الموز", listOf("التفاح", "الموز", "البرتقال", "البطيخ"), null)
+            )
         }
     }
 }

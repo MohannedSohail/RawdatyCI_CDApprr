@@ -8,8 +8,12 @@ import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 
 interface ChildrenApiService {
-    suspend fun getMyChildren(page: Int): ApiResponse<ApiListDto<ChildDto>>
-    suspend fun getChildren(classId: String?, page: Int): ApiResponse<ApiListDto<ChildDto>>
+    // جلب تفاصيل فصل معين مع طلابه
+    suspend fun getClassDetails(classId: String): ApiResponse<ClassDto>
+    
+    // جلب جميع الطلاب (سيقوم الباكيند بفلترتهم حسب صلاحية المعلم)
+    suspend fun getChildren(page: Int = 1): ApiResponse<ApiListDto<ChildDto>>
+    
     suspend fun getChild(id: String): ApiResponse<ChildDto>
     suspend fun createChild(name: String, classId: String, birthDate: String?, gender: String, parentId: String?): ApiResponse<ChildDto>
     suspend fun updateChild(id: String, name: String?, classId: String?, birthDate: String?, gender: String?): ApiResponse<ChildDto>
@@ -17,13 +21,15 @@ interface ChildrenApiService {
 }
 
 class ChildrenApiServiceImpl(private val client: HttpClient) : ChildrenApiService {
-    override suspend fun getMyChildren(page: Int): ApiResponse<ApiListDto<ChildDto>> = safeApiCall {
-        client.get("children/my") { parameter("page", page) }
+    
+    override suspend fun getClassDetails(classId: String): ApiResponse<ClassDto> = safeApiCall {
+        client.get("classes/$classId") {
+            parameter("include_children", "true")
+        }
     }
 
-    override suspend fun getChildren(classId: String?, page: Int): ApiResponse<ApiListDto<ChildDto>> = safeApiCall {
+    override suspend fun getChildren(page: Int): ApiResponse<ApiListDto<ChildDto>> = safeApiCall {
         client.get("children") {
-            parameter("class_id", classId)
             parameter("page", page)
         }
     }

@@ -65,8 +65,9 @@ fun AdminNewsScreenContent(
     onBack: () -> Unit,
 ) {
     val listState = rememberLazyListState()
+    var searchQuery by remember { mutableStateOf("") }
 
-    if (state.showDeleteDialog) {
+    if (state.showDeleteConfirmDialog) {
         DeleteConfirmDialog(
             title = "تأكيد حذف الخبر",
             message = "هل أنت متأكد من رغبتك في حذف هذا الخبر؟ لا يمكن التراجع عن هذا الإجراء.",
@@ -98,8 +99,11 @@ fun AdminNewsScreenContent(
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
                     OutlinedTextField(
-                        value = "", 
-                        onValueChange = { onIntent(NewsIntent.Search(it)) },
+                        value = searchQuery, 
+                        onValueChange = { 
+                            searchQuery = it
+                            onIntent(NewsIntent.Search(it)) 
+                        },
                         placeholder = { Text("بحث في الأخبار...", fontFamily = CairoFontFamily, color = Gray400) },
                         leadingIcon = { Icon(Icons.Default.Search, null, tint = BluePrimary) },
                         modifier = Modifier.fillMaxWidth(),

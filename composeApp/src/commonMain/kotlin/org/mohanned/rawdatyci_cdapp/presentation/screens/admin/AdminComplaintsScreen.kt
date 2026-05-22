@@ -100,7 +100,7 @@ fun AdminComplaintsScreenContent(
                                     Column(modifier = Modifier.padding(12.dp)) {
                                         Text("المشتكي: ${state.selectedComplaint.parentName}", style = MaterialTheme.typography.labelSmall, color = BluePrimary, fontWeight = FontWeight.Bold, fontFamily = CairoFontFamily)
                                         Spacer(Modifier.height(4.dp))
-                                        Text(state.selectedComplaint.content, style = MaterialTheme.typography.bodySmall, color = Gray600, maxLines = 3, overflow = TextOverflow.Ellipsis, fontFamily = CairoFontFamily)
+                                        Text(state.selectedComplaint.content, style = MaterialTheme.typography.bodySmall, color = Gray900, maxLines = 3, overflow = TextOverflow.Ellipsis, fontFamily = CairoFontFamily)
                                     }
                                 }
                                 OutlinedTextField(
@@ -109,12 +109,12 @@ fun AdminComplaintsScreenContent(
                                     placeholder = { Text("اكتب ردك هنا...", fontFamily = CairoFontFamily, color = Gray400) },
                                     modifier = Modifier.fillMaxWidth().height(140.dp),
                                     shape = RoundedCornerShape(16.dp),
-                                    textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily, color = Color.Black),
+                                    textStyle = LocalTextStyle.current.copy(fontFamily = CairoFontFamily, color = Gray900),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = BluePrimary, 
                                         unfocusedBorderColor = Gray200,
-                                        focusedTextColor = Color.Black,
-                                        unfocusedTextColor = Color.Black
+                                        focusedTextColor = Gray900,
+                                        unfocusedTextColor = Gray900
                                     )
                                 )
                             }
@@ -127,7 +127,7 @@ fun AdminComplaintsScreenContent(
                     RawdatyButton(
                         text = "إرسال الرد",
                         onClick = { onIntent(ComplaintsIntent.SubmitReply) },
-                        backgroundColor = MintPrimary,
+                        backgroundColor = BluePrimary,
                         enabled = state.replyText.isNotBlank(),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -192,19 +192,19 @@ private fun ComplaintCard(complaint: Complaint, onReply: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 RawdatyAvatar(complaint.parentName, size = 48.dp, gradient = RawdatyGradients.AvatarBlue)
                 Column(Modifier.weight(1f)) {
-                    Text(complaint.parentName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black, fontFamily = CairoFontFamily)
+                    Text(complaint.parentName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Gray900, fontFamily = CairoFontFamily)
                     Text(complaint.createdAt, style = MaterialTheme.typography.labelSmall, color = Gray400, fontFamily = CairoFontFamily)
                 }
                 StatusBadge(status = complaint.status)
             }
-            Text(complaint.content, style = MaterialTheme.typography.bodyMedium, color = Gray700, lineHeight = 22.sp, fontFamily = CairoFontFamily)
+            Text(complaint.content, style = MaterialTheme.typography.bodyMedium, color = Gray900, lineHeight = 22.sp, fontFamily = CairoFontFamily)
             if (complaint.reply != null) {
                 Surface(modifier = Modifier.fillMaxWidth(), color = BlueLight.copy(0.3f), shape = RoundedCornerShape(12.dp)) {
                     Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Icon(Icons.Default.QuestionAnswer, null, tint = BluePrimary, modifier = Modifier.size(18.dp))
                         Column {
                             Text("رد الإدارة:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = BluePrimary, fontFamily = CairoFontFamily)
-                            Text(complaint.reply ?: "", style = MaterialTheme.typography.bodySmall, color = Gray800, fontFamily = CairoFontFamily)
+                            Text(complaint.reply ?: "", style = MaterialTheme.typography.bodySmall, color = Gray900, fontFamily = CairoFontFamily)
                         }
                     }
                 }

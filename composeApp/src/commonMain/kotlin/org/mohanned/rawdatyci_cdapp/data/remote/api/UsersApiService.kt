@@ -2,15 +2,19 @@ package org.mohanned.rawdatyci_cdapp.data.remote.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
 import org.mohanned.rawdatyci_cdapp.core.network.safeApiCall
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 
 interface UsersApiService {
     suspend fun getUsers(role: String?, status: String?, search: String?, page: Int): ApiResponse<ApiListDto<UserDto>>
     suspend fun getUser(id: String): ApiResponse<UserDto>
-    suspend fun createUser(name: String, email: String, password: String, role: String, phone: String?, classId: String?): ApiResponse<UserDto>
+    suspend fun createTeacher(request: CreateUserRequest): ApiResponse<UserDto>
+    suspend fun createParent(request: CreateUserRequest): ApiResponse<UserDto>
     suspend fun updateUser(id: String, name: String?, phone: String?, isActive: Boolean?): ApiResponse<UserDto>
     suspend fun deleteUser(id: String): ApiResponse<Unit>
     suspend fun getProfile(): ApiResponse<UserDto>
@@ -20,6 +24,8 @@ interface UsersApiService {
 }
 
 class UsersApiServiceImpl(private val client: HttpClient) : UsersApiService {
+    private val json = Json { encodeDefaults = false; ignoreUnknownKeys = true }
+
     override suspend fun getUsers(role: String?, status: String?, search: String?, page: Int): ApiResponse<ApiListDto<UserDto>> = safeApiCall {
         client.get("users") {
             parameter("page", page)
@@ -33,11 +39,28 @@ class UsersApiServiceImpl(private val client: HttpClient) : UsersApiService {
         client.get("users/$id")
     }
 
-    override suspend fun createUser(name: String, email: String, password: String, role: String, phone: String?, classId: String?): ApiResponse<UserDto> = safeApiCall {
+    override suspend fun createTeacher(request: CreateUserRequest): ApiResponse<UserDto> = safeApiCall {
+        println("DEBUG: Creating Teacher Request: ${json.encodeToString(request)}")
         client.post("users") {
             contentType(ContentType.Application.Json)
-            setBody(CreateUserRequest(name, email, password, role, phone, classId))
+            setBody(request)
         }
+    }
+
+    override suspend fun createParent(request: CreateUserRequest): ApiResponse<UserDto> = safeApiCall {
+        val requestJson = json.encodeToString(request)
+        println("DEBUG: Sending to create_parent_user: $requestJson")
+        
+        val response = client.post("users/create_parent_user/") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        
+        if (response.status != HttpStatusCode.OK && response.status != HttpStatusCode.Created) {
+            println("DEBUG: Error Response (${response.status}): ${response.bodyAsText()}")
+        }
+        
+        response
     }
 
     override suspend fun updateUser(id: String, name: String?, phone: String?, isActive: Boolean?): ApiResponse<UserDto> = safeApiCall {

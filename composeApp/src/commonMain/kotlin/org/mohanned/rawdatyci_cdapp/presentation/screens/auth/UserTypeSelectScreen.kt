@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.mohanned.rawdatyci_cdapp.core.util.isDesktop
 import org.mohanned.rawdatyci_cdapp.presentation.components.AnimateEntrance
 import org.mohanned.rawdatyci_cdapp.presentation.components.OnBoardingHeader
 import org.mohanned.rawdatyci_cdapp.presentation.components.RawdatyCard
@@ -58,7 +59,7 @@ fun UserTypeSelectScreenContent(
         ) {
             OnBoardingHeader(
                 title = "مرحباً بك في رَوْضَتِي",
-                subtitle = "يُرجى تحديد نوع الحساب للمتابعة",
+                subtitle = if (isDesktop) "نسخة الإدارة - يرجى تسجيل الدخول" else "يُرجى تحديد نوع الحساب للمتابعة",
                 gradient = RawdatyGradients.Splash,
                 headerHeight = 260.dp
             ) {
@@ -85,47 +86,39 @@ fun UserTypeSelectScreenContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        AnimateEntrance(delay = 200){
-                        RoleCard(
-                            "ولي أمر طالب",
-                            "متابعة الأبناء، والنشاطات، والرسوم، والتواصل",
-                            Icons.Outlined.FamilyRestroom,
-                            BluePrimary
-                        ) { onTypeSelected("Parent") }}
-                        AnimateEntrance(delay = 300){
-                        RoleCard(
-                            "معلم / مشرفة",
-                            "إدارة الحضور، النشاطات اليومية، والدردشة",
-                            Icons.Outlined.School,
-                            MintPrimary
-                        ) { onTypeSelected("Teacher") }}
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // إذا كان ديسك توب، نظهر فقط خيار الإدارة
+                    if (!isDesktop) {
+                        AnimateEntrance(delay = 200) {
+                            RoleCard(
+                                "ولي أمر طالب",
+                                "متابعة الأبناء، والنشاطات، والرسوم، والتواصل",
+                                Icons.Outlined.FamilyRestroom,
+                                BluePrimary
+                            ) { onTypeSelected("Parent") }
+                        }
+                        AnimateEntrance(delay = 300) {
+                            RoleCard(
+                                "معلم / مشرفة",
+                                "إدارة الحضور، النشاطات اليومية، والدردشة",
+                                Icons.Outlined.School,
+                                MintPrimary
+                            ) { onTypeSelected("Teacher") }
+                        }
+                    }
 
-                        AnimateEntrance(delay = 400){
+                    AnimateEntrance(delay = 400) {
                         RoleCard(
                             "إدارة المؤسسة",
                             "تحكم كامل، تقارير، إدارة الحسابات المالية",
                             Icons.Outlined.AdminPanelSettings,
                             AmberPrimary
-                        ) { onTypeSelected("Admin") }}
+                        ) { onTypeSelected("Admin") }
                     }
+                }
 
 
                 Spacer(Modifier.height(48.dp))
-//
-//                AnimateEntrance(delay = 600) {
-//                    TextButton(onClick = { /* Help */ }) {
-//                        Text(
-//                            "تواجه مشكلة؟ تواصل مع الدعم الفني",
-//                            style = MaterialTheme.typography.labelLarge,
-//                            color = BluePrimary,
-//                            fontWeight = FontWeight.Bold,
-//                            fontFamily = CairoFontFamily
-//                        )
-//                    }
-//                }
-//
-//                Spacer(Modifier.height(40.dp))
             }
         }
     }

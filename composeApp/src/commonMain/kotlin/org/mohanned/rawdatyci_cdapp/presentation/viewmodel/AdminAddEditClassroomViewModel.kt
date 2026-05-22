@@ -85,7 +85,8 @@ class AdminAddEditClassroomViewModel(
                         }
                     }
                     is UiState.Error -> _state.update { it.copy(isLoading = false, error = uiState.message) }
-                    UiState.Loading -> { }
+                    is UiState.Loading -> { }
+                    else -> {}
                 }
             }
         } else {

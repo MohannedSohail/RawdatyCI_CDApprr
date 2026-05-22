@@ -10,9 +10,9 @@ import org.mohanned.rawdatyci_cdapp.data.remote.dto.*
 interface AttendanceApiService {
     suspend fun recordAttendance(request: CreateAttendanceRequest): ApiResponse<Unit>
     suspend fun updateAttendanceRecord(sessionId: String, childId: String, status: String): ApiResponse<Unit>
-    suspend fun getClassAttendance(classId: String, date: String?): ApiResponse<AttendanceSummaryDto>
-    suspend fun getChildAttendance(childId: String): ApiResponse<List<AttendanceRecordDto>>
-    suspend fun getMonthlyReport(classId: String?, month: Int?, year: Int?): ApiResponse<ApiListDto<AttendanceSummaryDto>>
+    suspend fun getClassAttendance(classId: String, fromDate: String?, toDate: String?): ApiResponse<AttendanceSummaryDto>
+    suspend fun getChildAttendance(childId: String, fromDate: String?): ApiResponse<List<AttendanceRecordDto>>
+    suspend fun getMonthlyReport(classId: String?, month: String?): ApiResponse<ApiListDto<AttendanceSummaryDto>>
 }
 
 class AttendanceApiServiceImpl(private val client: HttpClient) : AttendanceApiService {
@@ -30,21 +30,23 @@ class AttendanceApiServiceImpl(private val client: HttpClient) : AttendanceApiSe
         }
     }
 
-    override suspend fun getClassAttendance(classId: String, date: String?): ApiResponse<AttendanceSummaryDto> = safeApiCall {
+    override suspend fun getClassAttendance(classId: String, fromDate: String?, toDate: String?): ApiResponse<AttendanceSummaryDto> = safeApiCall {
         client.get("attendance/class/$classId") {
-            parameter("date", date)
+            parameter("from_date", fromDate)
+            parameter("to_date", toDate)
         }
     }
 
-    override suspend fun getChildAttendance(childId: String): ApiResponse<List<AttendanceRecordDto>> = safeApiCall {
-        client.get("attendance/child/$childId")
+    override suspend fun getChildAttendance(childId: String, fromDate: String?): ApiResponse<List<AttendanceRecordDto>> = safeApiCall {
+        client.get("attendance/child/$childId") {
+            parameter("from_date", fromDate)
+        }
     }
 
-    override suspend fun getMonthlyReport(classId: String?, month: Int?, year: Int?): ApiResponse<ApiListDto<AttendanceSummaryDto>> = safeApiCall {
+    override suspend fun getMonthlyReport(classId: String?, month: String?): ApiResponse<ApiListDto<AttendanceSummaryDto>> = safeApiCall {
         client.get("attendance/report/monthly") {
             parameter("class_id", classId)
             parameter("month", month)
-            parameter("year", year)
         }
     }
 }

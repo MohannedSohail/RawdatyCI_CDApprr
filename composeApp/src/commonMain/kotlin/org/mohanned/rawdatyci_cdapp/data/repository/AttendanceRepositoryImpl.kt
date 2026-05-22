@@ -7,6 +7,7 @@ import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceSummary
 import org.mohanned.rawdatyci_cdapp.domain.model.PaginatedResult
 import org.mohanned.rawdatyci_cdapp.domain.repository.AttendanceRepository
 import org.mohanned.rawdatyci_cdapp.core.network.ApiResponse
+import org.mohanned.rawdatyci_cdapp.domain.model.AttendanceStatus
 
 class AttendanceRepositoryImpl(
     private val api: AttendanceApiService
@@ -17,10 +18,7 @@ class AttendanceRepositoryImpl(
         records: List<AttendanceRecordRequest>
     ): ApiResponse<AttendanceSummary> {
         return try {
-            val response = api.recordAttendance(CreateAttendanceRequest(classId, date, records))
-            // The API returns Unit, but the Domain Repository expects AttendanceSummary.
-            // In a real scenario, the API might return the summary or we'd fetch it.
-            // Assuming we need to return something to satisfy the interface.
+            api.recordAttendance(CreateAttendanceRequest(classId, date, records))
             ApiResponse.Success(AttendanceSummary(date, classId, records.size, 0, 0, 0, 0f))
         } catch (e: Exception) {
             ApiResponse.NetworkError(e.message ?: "Network error")
@@ -35,8 +33,16 @@ class AttendanceRepositoryImpl(
     ): ApiResponse<AttendanceRecord> {
         return try {
             api.updateAttendanceRecord(sessionId, childId, status)
-            // Mocking the return record as the API returns Unit
-            ApiResponse.Success(AttendanceRecord("", childId, "", null, org.mohanned.rawdatyci_cdapp.domain.model.AttendanceStatus.PRESENT, notes))
+            ApiResponse.Success(
+                AttendanceRecord(
+                    "",
+                    childId,
+                    "",
+                    null,
+                    AttendanceStatus.PRESENT,
+                    notes
+                )
+            )
         } catch (e: Exception) {
             ApiResponse.NetworkError(e.message ?: "Network error")
         }
@@ -48,16 +54,17 @@ class AttendanceRepositoryImpl(
         toDate: String?,
         page: Int
     ): ApiResponse<PaginatedResult<AttendanceSummary>> {
-        return try {
-            val response = api.getClassAttendance(classId, fromDate)
-            if (response is ApiResponse.Success) {
-                // Converting single summary to paginated result for interface compatibility
-                ApiResponse.Success(PaginatedResult(listOf(response.data.toDomain()), 1, 1, 1, false))
-            } else {
-                response as ApiResponse<PaginatedResult<AttendanceSummary>>
+        return when (val response = api.getClassAttendance(classId, fromDate, toDate)) {
+            is ApiResponse.Success -> {
+                ApiResponse.Success(
+                    PaginatedResult(
+                        listOf(response.data.toDomain()),
+                        1, 1, 1, false
+                    )
+                )
             }
-        } catch (e: Exception) {
-            ApiResponse.NetworkError(e.message ?: "Network error")
+            is ApiResponse.Error -> ApiResponse.Error(response.code, response.message, response.errorCode)
+            is ApiResponse.NetworkError -> ApiResponse.NetworkError(response.message)
         }
     }
 
@@ -66,29 +73,30 @@ class AttendanceRepositoryImpl(
         fromDate: String?,
         page: Int
     ): ApiResponse<PaginatedResult<AttendanceRecord>> {
-        return try {
-            val response = api.getChildAttendance(childId)
-            if (response is ApiResponse.Success) {
-                ApiResponse.Success(PaginatedResult(response.data.map { it.toDomain() }, response.data.size, 1, 1, false))
-            } else {
-                response as ApiResponse<PaginatedResult<AttendanceRecord>>
+        return when (val response = api.getChildAttendance(childId, fromDate)) {
+            is ApiResponse.Success -> {
+                ApiResponse.Success(
+                    PaginatedResult(
+                        response.data.map { it.toDomain() },
+                        response.data.size, 1, 1, false
+                    )
+                )
             }
-        } catch (e: Exception) {
-            ApiResponse.NetworkError(e.message ?: "Network error")
+            is ApiResponse.Error -> ApiResponse.Error(response.code, response.message, response.errorCode)
+            is ApiResponse.NetworkError -> ApiResponse.NetworkError(response.message)
         }
     }
 
-    override suspend fun getMonthlyReport(month: String, classId: String?): ApiResponse<AttendanceSummary> {
-        return try {
-            // Mapping month string to int if possible, otherwise null
-            val response = api.getMonthlyReport(classId, month.toIntOrNull(), null)
-            if (response is ApiResponse.Success) {
+    override suspend fun getMonthlyReport(
+        month: String,
+        classId: String?
+    ): ApiResponse<AttendanceSummary> {
+        return when (val response = api.getMonthlyReport(classId, month)) {
+            is ApiResponse.Success -> {
                 ApiResponse.Success(response.data.data.first().toDomain())
-            } else {
-                response as ApiResponse<AttendanceSummary>
             }
-        } catch (e: Exception) {
-            ApiResponse.NetworkError(e.message ?: "Network error")
+            is ApiResponse.Error -> ApiResponse.Error(response.code, response.message, response.errorCode)
+            is ApiResponse.NetworkError -> ApiResponse.NetworkError(response.message)
         }
     }
 }
