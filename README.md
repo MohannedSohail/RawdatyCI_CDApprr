@@ -118,6 +118,14 @@ Data Layer
 
 ---
 
+# 🖥️ Control Panel
+
+<img width="1600" height="1538" alt="WhatsApp Image 2026-04-13 at 12 49 27 PM" src="https://github.com/user-attachments/assets/3b0b6d34-a3d5-4485-9b9b-201220cbcd37" />
+
+<img width="1600" height="727" alt="WhatsApp Image 2026-044-12 at 9 42 57 PM" src="https://github.com/user-attachments/assets/2d1d06d0-a352-4b9d-a012-6c0173f6e781" />
+
+---
+
 # 🚀 Platforms
 
 - ✅ Desktop
